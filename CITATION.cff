@@ -28,7 +28,7 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.8284224
     description: Zenodo Archive
-repository-code: 'https://github.com/tsutterley/timescale'
+repository-code: 'https://github.com/pyTMD/timescale'
 url: 'https://timescale.readthedocs.io'
 repository: 'https://pypi.org/project/timescale'
 repository-artifact: 'https://anaconda.org/conda-forge/timescale'

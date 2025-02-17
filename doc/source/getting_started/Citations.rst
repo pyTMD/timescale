@@ -39,7 +39,7 @@ Problem Reports
 ###############
 
 If you have found a problem in ``timescale``, or you would like to suggest an improvement or modification,
-please submit a `GitHub issue <https://github.com/tsutterley/timescale/issues>`_ and we will get back to you.
+please submit a `GitHub issue <https://github.com/pyTMD/timescale/issues>`_ and we will get back to you.
 
 Dependencies
 ############

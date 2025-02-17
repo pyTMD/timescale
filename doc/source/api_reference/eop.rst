@@ -10,7 +10,7 @@ Utilities for maintaining Earth Orientation Parameter (EOP) files
 
 `Source code`__
 
-.. __: https://github.com/tsutterley/timescale/blob/main/timescale/eop.py
+.. __: https://github.com/pyTMD/timescale/blob/main/timescale/eop.py
 
 
 General Methods
