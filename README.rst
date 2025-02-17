@@ -9,8 +9,8 @@ timescale
 |zenodo|
 
 
-.. |License| image:: https://img.shields.io/github/license/tsutterley/timescale
-   :target: https://github.com/tsutterley/timescale/blob/main/LICENSE
+.. |License| image:: https://img.shields.io/github/license/pyTMD/timescale
+   :target: https://github.com/pyTMD/timescale/blob/main/LICENSE
 
 .. |Documentation Status| image:: https://readthedocs.org/projects/timescale/badge/?version=latest
    :target: https://timescale.readthedocs.io/en/latest/?badge=latest
@@ -49,7 +49,7 @@ Development version from GitHub:
 
 .. code-block:: bash
 
-   python3 -m pip install git+https://github.com/tsutterley/timescale.git
+   python3 -m pip install git+https://github.com/pyTMD/timescale.git
 
 Dependencies
 ############
@@ -71,9 +71,9 @@ Download
 ########
 
 | The program homepage is:
-| https://github.com/tsutterley/timescale
+| https://github.com/pyTMD/timescale
 | A zip archive of the latest version is available directly at:
-| https://github.com/tsutterley/timescale/archive/main.zip
+| https://github.com/pyTMD/timescale/archive/main.zip
 
 Disclaimer
 ##########
@@ -86,7 +86,7 @@ Credits
 #######
 
 This project contains work and contributions from the `scientific community <./CONTRIBUTORS.rst>`_.
-If you would like to contribute to the project, please have a look at the `open issues <https://github.com/tsutterley/timescale/issues>`_ and `discussions board <https://github.com/tsutterley/timescale/discussions>`_.
+If you would like to contribute to the project, please have a look at the `open issues <https://github.com/pyTMD/timescale/issues>`_ and `discussions board <https://github.com/pyTMD/timescale/discussions>`_.
 
 License
 #######

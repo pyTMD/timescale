@@ -11,7 +11,7 @@ Download and management utilities for syncing time and auxiliary files
 
 `Source code`__
 
-.. __: https://github.com/tsutterley/timescale/blob/main/timescale/utilities.py
+.. __: https://github.com/pyTMD/timescale/blob/main/timescale/utilities.py
 
 
 General Methods
