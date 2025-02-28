@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 u"""
 time.py
-Written by Tyler Sutterley (10/2024)
+Written by Tyler Sutterley (02/2025)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,8 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 02/2025: added GLONASS as delta time option
+        update GPS seconds calculation for output from timescale object
     Updated 10/2024: split is_leap from calendar_days function
     Updated 09/2024: make Timescale and Calendar objects subscriptable
     Updated 06/2024: assert that year, month, day, etc are float64
@@ -765,6 +767,9 @@ class Timescale:
             # calculate difference in leap seconds from start of epoch
             self.leaps = count_leap_seconds(GPS_Time) - \
                 count_leap_seconds(np.atleast_1d(GPS_Epoch_Time))
+        elif (standard.upper() == 'GLONASS'):
+            # GLONASS time is ahead of UTC time by 3 hours
+            self.leaps = 3.0*3600.0
         else:
             self.leaps = 0.0
         # convert time to days relative to Modified Julian days in UTC
@@ -953,13 +958,22 @@ class Timescale:
     def gps(self):
         """Seconds since 1980-01-06T00:00:00
         """
-        return (self.tt - 2444244.5)*self.day
+        # dynamic time is ahead of TAI by approximately 32.184 seconds
+        TT_TAI = 32.184
+        # TAI time is ahead of GPS by 19 seconds
+        TAI_GPS = 19.0
+        # convert from dynamic time to TAI
+        TAI = np.atleast_1d(self.tt - 2444244.5)*self.day - TT_TAI
+        # calculate the number of leap seconds
+        leaps = count_leap_seconds(TAI - TAI_GPS)
+        # return the GPS time
+        return (self.ut1 - 2444244.5)*self.day + leaps
 
     @timescale.utilities.reify
     def gps_week(self):
         """GPS week number since 1980-01-06T00:00:00
         """
-        return ((self.tt - 2444244.5)//7).astype(np.int64)
+        return (self.gps/(self.day*7)).astype(np.int64)
 
     @timescale.utilities.reify
     def J2000(self):
@@ -1252,7 +1266,7 @@ def get_leap_seconds(truncate: bool = True):
 
     Returns
     -------
-    GPS time: float
+    leap_GPS: float
         GPS seconds when leap seconds occurred
     """
     leap_secs = timescale.utilities.get_data_path(['data','leap-seconds.list'])
