@@ -208,6 +208,22 @@ def test_earth_rotation_angle():
     expected = 0.8730204642501604
     assert np.isclose(360.0*expected, ts.era).all()
 
+def test_gps_week():
+    """Test that the GPS week matches expected outputs
+    """
+    ts = timescale.from_range('2006-01-01','2006-12-31',7)
+    exp = np.arange(1356, 1408 + 1)
+    assert np.all(ts.gps_week == exp) 
+    ts = timescale.from_range('2017-01-01','2017-12-31',7)
+    exp = np.arange(1930, 1982 + 1)
+    assert np.all(ts.gps_week == exp) 
+    ts = timescale.from_range('2018-01-01','2018-12-31',7)
+    exp = np.arange(1982, 2034 + 1)
+    assert np.all(ts.gps_week == exp) 
+    ts = timescale.from_range('2019-01-01','2019-12-31',7)
+    exp = np.arange(2034, 2086 + 1)
+    assert np.all(ts.gps_week == exp) 
+
 def test_greenwich():
     """Test approximations of Greenwich Hour Angle in degrees
     using Meeus approximation and calculation within pyTMD

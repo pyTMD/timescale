@@ -973,7 +973,7 @@ class Timescale:
     def gps_week(self):
         """GPS week number since 1980-01-06T00:00:00
         """
-        return (self.gps//7).astype(np.int64)
+        return (self.gps/(self.day*7)).astype(np.int64)
 
     @timescale.utilities.reify
     def J2000(self):
