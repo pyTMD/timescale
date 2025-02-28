@@ -17,4 +17,4 @@ Alternative Data Sources
 Software
 ########
 
-- `pyTMD: Python-based tidal prediction software <https://github.com/tsutterley/pyTMD>`_
+- `pyTMD: Python-based tidal prediction software <https://github.com/pyTMD/pyTMD>`_
