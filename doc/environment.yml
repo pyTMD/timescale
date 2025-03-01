@@ -17,6 +17,7 @@ dependencies:
   - sphinx
   - sphinx-argparse>=0.4
   - sphinxcontrib-bibtex
+  - sphinx-design
   - sphinx_rtd_theme
   - pip:
     - ..
