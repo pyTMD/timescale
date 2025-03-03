@@ -2,10 +2,14 @@
 Contribution Guidelines
 =======================
 
-We welcome and invite contributions from anyone at any career stage and with any amount of coding experience towards the development of ``timescale``.
-We appreciate any and all contributions made to the project.
+``timescale`` is an open source project.
+We welcome any help in maintaining and developing the software and documentation.
+Anyone at any career stage and with any level of coding experience can contribute towards the development of ``timescale``.
 Please read our `code of conduct <./Code-of-Conduct.html>`_ before contributing to ``timescale`` development.
-You will be recognized for your work by being listed as one of the `project contributors <./Citations.html#contributors>`_.
+You will be recognized for your work by being listed as one of the `project contributors <../project/Contributors.html>`_.
+
+If you have found a problem in ``timescale``, or you would like to suggest an improvement or modification,
+please submit a `GitHub issue <https://github.com/pyTMD/timescale/issues>`_ and we will get back to you.
 
 Ways to Contribute
 ------------------
@@ -64,7 +68,7 @@ Fully working (but unrendered) examples should be submitted with the same steps 
 Continuous Integration
 ^^^^^^^^^^^^^^^^^^^^^^
 We use `GitHub Actions <https://github.com/pyTMD/timescale/actions>`_ continuous integration (CI) services to build and test the project on Linux (Ubuntu) and Mac Operating Systems.
-The configuration files for this service are in `.github/workflows <https://github.com/pyTMD/timescale/blob/main/.github/workflows>`_.
+The configuration files for this service are in the `GitHub workflows <https://github.com/pyTMD/timescale/tree/main/.github/workflows>`_ directory.
 The workflows rely on the `environment.yml <https://github.com/pyTMD/timescale/blob/main/environment.yml>`_ and `requirements-dev.txt <https://github.com/pyTMD/timescale/blob/main/requirements-dev.txt>`_ files to install the required dependencies.
 
 The GitHub Actions jobs include:
@@ -72,6 +76,7 @@ The GitHub Actions jobs include:
 * Updating `leap second <https://github.com/pyTMD/timescale/blob/main/timescale/data/leap-seconds.list>`_ and `delta time  <https://github.com/pyTMD/timescale/blob/main/timescale/data/merged_deltat.list>`_ files
 * Running `flake8 <https://flake8.pycqa.org/en/latest/>`_ to check the code for style and compilation errors
 * Running the test suite on multiple combinations of OS and Python version
+* Uploading source and wheel distributions to `PyPI <https://pypi.org/project/timescale/>`_ (on releases)
 
 Semantic Commit Messages
 ^^^^^^^^^^^^^^^^^^^^^^^^

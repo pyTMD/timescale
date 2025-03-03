@@ -33,8 +33,8 @@ url: 'https://timescale.readthedocs.io'
 repository: 'https://pypi.org/project/timescale'
 repository-artifact: 'https://anaconda.org/conda-forge/timescale'
 doi: "10.5281/zenodo.8284224"
-version: "0.0.6"
-date-released: "2024-12-19"
+version: "0.0.7"
+date-released: "2025-03-03"
 keywords:
   - Time
   - Leap Seconds

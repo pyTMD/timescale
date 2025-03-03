@@ -7,7 +7,7 @@ the `Python Package Index (pypi) <https://pypi.org/project/timescale/>`_,
 and from `conda-forge <https://anaconda.org/conda-forge/timescale>`_.
 
 
-The simplest installation for most users will likely be using ``conda``:
+The simplest installation for most users will likely be using ``conda`` or ``mamba``:
 
 .. code-block:: bash
 
@@ -25,13 +25,7 @@ To use the development repository, please fork ``timescale`` into your own accou
 
     git clone https://github.com/pyTMD/timescale.git
 
-``timescale`` can then be installed within the package directory using ``setuptools``:
-
-.. code-block:: bash
-
-    python3 setup.py install
-
-or ``pip``
+``timescale`` can then be installed within the package directory using ``pip``:
 
 .. code-block:: bash
 

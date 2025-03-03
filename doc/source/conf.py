@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.graphviz",
     "sphinx.ext.viewcode",
+    "sphinx_design",
     "sphinxarg.ext"
 ]
 
@@ -103,6 +104,10 @@ html_context = {
         (
             '<i class="fa fa-book fa-fw"></i> License',
             f"{repository_url}/blob/main/LICENSE",
+        ),
+        (
+            '<i class="fa fa-comment fa-fw"></i> Discussions',
+            f"{repository_url}/discussions",
         ),
     ],
 }

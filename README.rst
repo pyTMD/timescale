@@ -6,6 +6,7 @@ timescale
 |Documentation Status|
 |PyPI|
 |conda-forge|
+|commits-since|
 |zenodo|
 
 
@@ -21,10 +22,15 @@ timescale
 .. |conda-forge| image:: https://img.shields.io/conda/vn/conda-forge/timescale
    :target: https://anaconda.org/conda-forge/timescale
 
+.. |commits-since| image:: https://img.shields.io/github/commits-since/pyTMD/timescale/latest
+   :target: https://github.com/pyTMD/timescale/releases/latest
+
 .. |zenodo| image:: https://zenodo.org/badge/681330279.svg
    :target: https://zenodo.org/badge/latestdoi/681330279
 
 Python tools for time and astronomical calculations
+
+For more information: see the documentation at `timescale.readthedocs.io <https://timescale.readthedocs.io/>`_
 
 Installation
 ############
@@ -82,8 +88,8 @@ This package includes software developed at NASA Goddard Space Flight Center (GS
 It is not sponsored or maintained by the Universities Space Research Association (USRA), AVISO or NASA.
 The software is provided here for your convenience but *with no guarantees whatsoever*.
 
-Credits
-#######
+Contributing
+############
 
 This project contains work and contributions from the `scientific community <./CONTRIBUTORS.rst>`_.
 If you would like to contribute to the project, please have a look at the `open issues <https://github.com/pyTMD/timescale/issues>`_ and `discussions board <https://github.com/pyTMD/timescale/discussions>`_.
