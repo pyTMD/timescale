@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 u"""
 time.py
-Written by Tyler Sutterley (02/2025)
+Written by Tyler Sutterley (03/2025)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 03/2025: added attributes for ut1_utc and gps_utc
     Updated 02/2025: added GLONASS as delta time option
         update GPS seconds calculation for output from timescale object
     Updated 10/2024: split is_leap from calendar_days function
@@ -958,16 +959,21 @@ class Timescale:
     def gps(self):
         """Seconds since 1980-01-06T00:00:00
         """
-        # dynamic time is ahead of TAI by approximately 32.184 seconds
-        TT_TAI = 32.184
-        # TAI time is ahead of GPS by 19 seconds
-        TAI_GPS = 19.0
-        # convert from dynamic time to TAI
-        TAI = np.atleast_1d(self.tt - 2444244.5)*self.day - TT_TAI
-        # calculate the number of leap seconds
-        leaps = count_leap_seconds(TAI - TAI_GPS)
         # return the GPS time
-        return (self.ut1 - 2444244.5)*self.day + leaps
+        return (self.ut1 - 2444244.5)*self.day + self.gps_utc
+
+    @timescale.utilities.reify
+    def gps_utc(self):
+        """Leap seconds between GPS and UTC time
+        """
+        # dynamic time is ahead of TAI by 32.184 seconds
+        _tt_tai = 32.184
+        # TAI time is ahead of GPS by 19 seconds
+        _tai_gps = 19.0
+        # convert from dynamic time to TAI
+        TAI = np.atleast_1d(self.tt - 2444244.5)*self.day - _tt_tai
+        # calculate the number of leap seconds
+        return count_leap_seconds(TAI - _tai_gps)
 
     @timescale.utilities.reify
     def gps_week(self):
@@ -1013,6 +1019,21 @@ class Timescale:
         """
         # return the delta time for the input date converted to days
         return interpolate_delta_time(_delta_file, self.tide)
+    
+    @timescale.utilities.reify
+    def ut1_utc(self):
+        """
+        Difference between universal time (UT1) and
+        coordinated universal time (UTC)
+        """
+        # dynamic time is ahead of TAI by 32.184 seconds
+        _tt_tai = 32.184
+        # TAI time is ahead of GPS by 19 seconds
+        _tai_gps = 19.0
+        # convert from delta times back to seconds
+        _tt_ut1 = self.day*self.tt_ut1
+        # recalculate UT1-UTC (seconds)
+        return _tt_tai + _tai_gps + self.gps_utc - _tt_ut1
 
     @timescale.utilities.reify
     def T(self):
