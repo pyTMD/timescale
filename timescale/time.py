@@ -852,7 +852,7 @@ class Timescale:
         """
         Convert a ``Timescale`` object to a ``Calendar`` object
         """
-        return Calendar(self.ut1)
+        return Calendar(self.utc)
 
     def to_deltatime(self,
             epoch: str | tuple | list | np.ndarray,
@@ -963,7 +963,7 @@ class Timescale:
         """Seconds since 1980-01-06T00:00:00
         """
         # return the GPS time
-        return (self.ut1 - 2444244.5)*self.day + self.gps_utc
+        return (self.utc - 2444244.5)*self.day + self.gps_utc
 
     @timescale.utilities.reify
     def gps_utc(self):
@@ -1050,13 +1050,19 @@ class Timescale:
         """Universal Time (UT) as Julian Days
         """
         # convert UT1-UTC to days
-        return self.MJD + _jd_mjd + self.ut1_utc/self.day
+        return self.utc + self.ut1_utc/self.day
 
+    @timescale.utilities.reify
+    def utc(self):
+        """Coordinated Universal Time (UTC) as Julian Days
+        """
+        return self.MJD + _jd_mjd 
+    
     @timescale.utilities.reify
     def year(self):
         """Universal Time (UT) as calendar year
         """
-        Y, M, D, h, m, s = convert_julian(self.ut1, format='tuple')
+        Y, M, D, h, m, s = convert_julian(self.utc, format='tuple')
         return convert_calendar_decimal(Y, M, D, hour=h, minute=m, second=s)
 
     def min(self):
@@ -1149,9 +1155,9 @@ class Calendar:
     """
     Class for converting from Julian dates to calendar dates
     """
-    def __init__(self, ut1=None):
+    def __init__(self, utc=None):
         # Julian Days
-        self.ut1 = ut1
+        self.utc = utc
         self.from_julian()
 
     def from_julian(self):
@@ -1159,25 +1165,25 @@ class Calendar:
         Converts from Julian dates to calendar dates
         """
         # convert Julian date to calendar
-        for key, val in convert_julian(self.ut1).items():
+        for key, val in convert_julian(self.utc).items():
             setattr(self, key, val)
 
     @property
     def dtype(self):
         """Main data type of ``Calendar`` object"""
-        return self.ut1.dtype
+        return self.utc.dtype
 
     @property
     def shape(self):
         """Dimensions of ``Calendar`` object
         """
-        return np.shape(self.ut1)
+        return np.shape(self.utc)
 
     @property
     def ndim(self):
         """Number of dimensions in ``Calendar`` object
         """
-        return np.ndim(self.ut1)
+        return np.ndim(self.utc)
 
     def __str__(self):
         """String representation of the ``Calendar`` object
@@ -1188,13 +1194,13 @@ class Calendar:
     def __len__(self):
         """Number of time values
         """
-        return len(np.atleast_1d(self.ut1))
+        return len(np.atleast_1d(self.utc))
 
     def __getitem__(self, ind):
         """Subset ``Calendar`` object to indices
         """
-        ut1 = np.atleast_1d(self.ut1)[ind].copy()
-        return Calendar(ut1=ut1)
+        utc = np.atleast_1d(self.utc)[ind].copy()
+        return Calendar(utc=utc)
 
     def __iter__(self):
         """Iterate over time values
@@ -1206,12 +1212,12 @@ class Calendar:
         """Get the next time step
         """
         try:
-            ut1 = np.atleast_1d(self.ut1)[self.__index__].copy()
+            utc = np.atleast_1d(self.utc)[self.__index__].copy()
         except IndexError as exc:
             raise StopIteration from exc
         # add to index
         self.__index__ += 1
-        return Calendar(ut1=ut1)
+        return Calendar(utc=utc)
 
 # PURPOSE: calculate the difference between universal time and dynamical time
 # by interpolating a delta time file to a given date
