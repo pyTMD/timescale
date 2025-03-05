@@ -174,9 +174,9 @@ def test_timescale():
     assert np.all(ATLAS.MJD == SHORTCUT.MJD)
     # from MJD
     ATLAS = timescale.time.Timescale(MJD=58119)
-    assert np.all(ATLAS.ut1 == 2458119.5)
+    assert np.all(ATLAS.utc == 2458119.5)
     assert np.all(ATLAS.tide == 9497)
-    assert np.all((ATLAS.MJD - 51544.5) == (ATLAS.ut1 - 2451545.0))
+    assert np.all((ATLAS.MJD - 51544.5) == (ATLAS.utc - 2451545.0))
     SHORTCUT = timescale.from_julian(2458119.5)
     assert np.all(ATLAS.MJD == SHORTCUT.MJD)
     # from MJD hourly array
