@@ -952,8 +952,11 @@ class Timescale:
         """Greenwich Mean Sidereal Time (GMST) in fractions of day
         """
         GMST = np.array([24110.54841, 8640184.812866, 9.3104e-2, -6.2e-6])
+        # UT1 as Julian centuries
+        _jd_j2000 = _jd_mjd + _mjd_j2000
+        ut1 = (self.ut1 - _jd_j2000)/self.century
         # convert from seconds to fractions of day
-        return np.mod(self.polynomial_sum(GMST, self.T)/self.day, self.turn)
+        return np.mod(self.polynomial_sum(GMST, ut1)/self.day, self.turn)
 
     @timescale.utilities.reify
     def gps(self):
@@ -1046,7 +1049,8 @@ class Timescale:
     def ut1(self):
         """Universal Time (UT) as Julian Days
         """
-        return self.MJD + _jd_mjd
+        # convert UT1-UTC to days
+        return self.MJD + _jd_mjd + self.ut1_utc/self.day
 
     @timescale.utilities.reify
     def year(self):
