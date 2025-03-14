@@ -934,7 +934,9 @@ class Timescale:
         """Earth Rotation Angle (ERA) in degrees
         """
         # earth rotation angle using Universal Time
-        J = self.MJD - _mjd_j2000
+        _jd_j2000 = _jd_mjd + _mjd_j2000
+        # UT1 in days since J2000
+        J = self.ut1 - _jd_j2000
         fraction = np.mod(J, self.turn)
         theta = np.mod(0.7790572732640 + 0.00273781191135448*J, self.turn)
         return self.turndeg*np.mod(theta + fraction, self.turn)
@@ -996,12 +998,26 @@ class Timescale:
         """Greenwich Mean Sidereal Time (GMST) in fractions of a day
         from the Equinox Method
         """
+        # IAU 2000 model for GMST
         # sidereal time polynomial coefficients in arcseconds
         sidereal_time = np.array([0.014506, 4612.156534, 1.3915817, -4.4e-7,
             -2.9956e-05, -3.68e-08])
         ST = self.polynomial_sum(sidereal_time, self.T)
         # get earth rotation angle and convert to arcseconds
+        # convert from arcseconds to fractions of day
         return np.mod(ST + self.era*self.deg2asec, self.turnasec)/self.turnasec
+
+    @timescale.utilities.reify
+    def tbd(self):
+        """Approximate Barycentric Dynamical Time (TDB) in terms of
+        seconds since 2000-01-01T12:00:00
+        """
+        # Julian day to two decimals of a day.
+        _jd_j2000 = _jd_mjd + _mjd_j2000
+        J = np.round(self.utc - _jd_j2000, decimals=2)
+        g = np.pi*(357.53 + 0.9856003*J)/180.0
+        # calculate the approximate TDB time
+        return self.J2000 + 0.001658*np.sin(g) + 0.000014*np.sin(2.0*g)
 
     @timescale.utilities.reify
     def tide(self):
@@ -1011,7 +1027,7 @@ class Timescale:
 
     @timescale.utilities.reify
     def tt(self):
-        """Dynamic Time (TT) as Julian Days
+        """Terrestrial Time (TT) as Julian Days
         """
         return self.MJD + self.tt_ut1 + _jd_mjd
 
