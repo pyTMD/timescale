@@ -1013,7 +1013,7 @@ class Timescale:
         seconds since 2000-01-01T12:00:00
         """
         # calculate the approximate TDB time
-        return self.J2000 + self.tbd_tt
+        return self.J2000 + self.tdb_tt
 
     @timescale.utilities.reify
     def tdb_tt(self):
