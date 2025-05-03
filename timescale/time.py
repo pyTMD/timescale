@@ -1008,16 +1008,26 @@ class Timescale:
         return np.mod(ST + self.era*self.deg2asec, self.turnasec)/self.turnasec
 
     @timescale.utilities.reify
-    def tbd(self):
+    def tdb(self):
         """Approximate Barycentric Dynamical Time (TDB) in terms of
         seconds since 2000-01-01T12:00:00
         """
-        # Julian day to two decimals of a day.
-        _jd_j2000 = _jd_mjd + _mjd_j2000
-        J = np.round(self.utc - _jd_j2000, decimals=2)
-        g = np.pi*(357.53 + 0.9856003*J)/180.0
         # calculate the approximate TDB time
-        return self.J2000 + 0.001658*np.sin(g) + 0.000014*np.sin(2.0*g)
+        return self.J2000 + self.tbd_tt
+
+    @timescale.utilities.reify
+    def tdb_tt(self):
+        """
+        Difference between Barycentric Dynamical Time (TDB) and
+        terrestrial time (TT) in seconds :cite:p:`Kaplan:2005kj`
+        """
+        return 0.001657 * np.sin(628.3076 * self.T + 6.2401) + \
+            0.000022 * np.sin(575.3385 * self.T + 4.2970) + \
+            0.000014 * np.sin(1256.6152 * self.T + 6.1969) + \
+            0.000005 * np.sin(606.9777 * self.T + 4.0212) + \
+            0.000005 * np.sin(52.9691 * self.T + 0.4444) + \
+            0.000002 * np.sin(21.3299 * self.T + 5.5431) + \
+            0.000010 * self.T * np.sin(628.3076 * self.T + 4.2490)
 
     @timescale.utilities.reify
     def tide(self):
