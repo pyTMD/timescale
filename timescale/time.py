@@ -1009,25 +1009,27 @@ class Timescale:
 
     @timescale.utilities.reify
     def tdb(self):
-        """Approximate Barycentric Dynamical Time (TDB) in terms of
-        seconds since 2000-01-01T12:00:00
+        """Approximate Barycentric Dynamical Time (TDB) as Julian Days
         """
         # calculate the approximate TDB time
-        return self.J2000 + self.tdb_tt
+        return self.tt + self.tdb_tt
 
     @timescale.utilities.reify
     def tdb_tt(self):
         """
         Difference between Barycentric Dynamical Time (TDB) and
-        terrestrial time (TT) in seconds :cite:p:`Kaplan:2005kj`
+        terrestrial time (TT) :cite:p:`Fairhead:1990vz,Kaplan:2005kj`
         """
-        return 0.001657 * np.sin(628.3076 * self.T + 6.2401) + \
+        # truncated Fairhead and Bretagnon series
+        FB = 0.001657 * np.sin(628.3076 * self.T + 6.2401) + \
             0.000022 * np.sin(575.3385 * self.T + 4.2970) + \
             0.000014 * np.sin(1256.6152 * self.T + 6.1969) + \
             0.000005 * np.sin(606.9777 * self.T + 4.0212) + \
             0.000005 * np.sin(52.9691 * self.T + 0.4444) + \
             0.000002 * np.sin(21.3299 * self.T + 5.5431) + \
             0.000010 * self.T * np.sin(628.3076 * self.T + 4.2490)
+        # convert from seconds to days
+        return FB/self.day
 
     @timescale.utilities.reify
     def tide(self):
