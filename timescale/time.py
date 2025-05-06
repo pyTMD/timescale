@@ -934,7 +934,9 @@ class Timescale:
         """Earth Rotation Angle (ERA) in degrees
         """
         # earth rotation angle using Universal Time
-        J = self.MJD - _mjd_j2000
+        _jd_j2000 = _jd_mjd + _mjd_j2000
+        # UT1 in days since J2000
+        J = self.ut1 - _jd_j2000
         fraction = np.mod(J, self.turn)
         theta = np.mod(0.7790572732640 + 0.00273781191135448*J, self.turn)
         return self.turndeg*np.mod(theta + fraction, self.turn)
@@ -996,12 +998,38 @@ class Timescale:
         """Greenwich Mean Sidereal Time (GMST) in fractions of a day
         from the Equinox Method
         """
+        # IAU 2000 model for GMST
         # sidereal time polynomial coefficients in arcseconds
         sidereal_time = np.array([0.014506, 4612.156534, 1.3915817, -4.4e-7,
             -2.9956e-05, -3.68e-08])
         ST = self.polynomial_sum(sidereal_time, self.T)
         # get earth rotation angle and convert to arcseconds
+        # convert from arcseconds to fractions of day
         return np.mod(ST + self.era*self.deg2asec, self.turnasec)/self.turnasec
+
+    @timescale.utilities.reify
+    def tdb(self):
+        """Approximate Barycentric Dynamical Time (TDB) as Julian Days
+        """
+        # calculate the approximate TDB time
+        return self.tt + self.tdb_tt
+
+    @timescale.utilities.reify
+    def tdb_tt(self):
+        """
+        Difference between Barycentric Dynamical Time (TDB) and
+        terrestrial time (TT) :cite:p:`Fairhead:1990vz,Kaplan:2005kj`
+        """
+        # truncated Fairhead and Bretagnon series
+        FB = 0.001657 * np.sin(628.3076 * self.T + 6.2401) + \
+            0.000022 * np.sin(575.3385 * self.T + 4.2970) + \
+            0.000014 * np.sin(1256.6152 * self.T + 6.1969) + \
+            0.000005 * np.sin(606.9777 * self.T + 4.0212) + \
+            0.000005 * np.sin(52.9691 * self.T + 0.4444) + \
+            0.000002 * np.sin(21.3299 * self.T + 5.5431) + \
+            0.000010 * self.T * np.sin(628.3076 * self.T + 4.2490)
+        # convert from seconds to days
+        return FB/self.day
 
     @timescale.utilities.reify
     def tide(self):
@@ -1011,7 +1039,7 @@ class Timescale:
 
     @timescale.utilities.reify
     def tt(self):
-        """Dynamic Time (TT) as Julian Days
+        """Terrestrial Time (TT) as Julian Days
         """
         return self.MJD + self.tt_ut1 + _jd_mjd
 
