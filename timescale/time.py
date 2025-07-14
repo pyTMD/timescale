@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 u"""
 time.py
-Written by Tyler Sutterley (03/2025)
+Written by Tyler Sutterley (07/2025)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 07/2025: verify Bulletin-A entries are not already in merged file
     Updated 03/2025: added attributes for ut1_utc and gps_utc
     Updated 02/2025: added GLONASS as delta time option
         update GPS seconds calculation for output from timescale object
@@ -1537,9 +1538,13 @@ def append_delta_time(verbose: bool = False, mode: oct = 0o775):
     -----
     Delta times are the difference between universal time and dynamical time
     """
-
-    # append to merged file
+    # merged delta time file
     merged_file = timescale.utilities.get_data_path(['data','merged_deltat.data'])
+    # read merged delta time file
+    dinput = np.loadtxt(merged_file)
+    merged_time = convert_calendar_decimal(dinput[:,0], dinput[:,1],
+        day=dinput[:,2])
+    # append to merged file
     fid = merged_file.open(mode='a', encoding='utf8')
     logging.info(str(merged_file))
     # read latest Bulletin-A file from IERS
@@ -1549,6 +1554,13 @@ def append_delta_time(verbose: bool = False, mode: oct = 0o775):
         YY,MM,DD,DELTAT = read_iers_bulletin_a(fileID)
     # append latest delta time values to merged file
     for Y, M, D, T in zip(YY, MM, DD, DELTAT):
+        daily_time = convert_calendar_decimal(float(Y), float(M),
+            day=float(D))
+        # check if date is already in merged file
+        if daily_time in merged_time:
+            logging.info(f'{Y:4.0f}-{M:02.0f}-{D:02.0f} exists in merged file')
+            continue
+        # write to merged file
         print(f' {Y:4.0f} {M:2.0f} {D:2.0f} {T:7.4f}', file=fid)
     # close the merged file and change the permissions mode
     fid.close()
