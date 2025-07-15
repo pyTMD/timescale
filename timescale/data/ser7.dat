@@ -14,14 +14,14 @@
             where pi = 3.14159265... and T is the date in Besselian years.     
          TT = TAI + 32.184 seconds                                             
          DUT1= (UT1-UTC) transmitted with time signals                         
-             = 0.0 seconds beginning 26 December 2024 at 0000 UTC              
+             = +0.1 seconds beginning 10 July 2025 at 0000 UTC                 
          Beginning 1 January 2017:                                             
             TAI-UTC = 37.000 000 seconds                                       
      ***********************************************************************
      * ANNOUNCEMENTS:                                                      *
      *                                                                     *
      * There will NOT be a leap second introduced in UTC                   *
-     * at the end of June 2025.                                            *
+     * at the end of December 2025.                                        *
      *                                                                     *
      * The primary source for IERS Rapid Service/Prediction Center (RS/PC) *
      * data products is the official IERS RS/PC website:                   *
