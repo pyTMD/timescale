@@ -352,12 +352,11 @@ def iers_mean_pole(
         # read mean pole file
         input_file = pathlib.Path(kwargs['file']).expanduser().absolute()
         table = np.loadtxt(input_file)
-        # reduce to 1971 to end date
-        ii, = np.nonzero(table[:, 0] >= 1971)
+        # Reduce table following 2015 conventions:
+        # 1. trim dates prior to 1971
+        # 2. only keep rows falling on exact years
+        ii, = np.nonzero((table[:, 0] >= 1971) & ((table[:, 0] % 1) == 0.0))
         table = np.copy(table[ii,:])
-        # reduce to yearly values following 2015 conventions
-        jj, = np.nonzero((table[:, 0] % 1) == 0.0)
-        table = np.copy(table[jj,:])
     # allocate for output arrays
     x = np.full_like(input_epoch, kwargs['fill_value'])
     y = np.full_like(input_epoch, kwargs['fill_value'])
