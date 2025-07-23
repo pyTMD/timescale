@@ -15,6 +15,7 @@ PROGRAM DEPENDENCIES:
 
 UPDATE HISTORY:
     Updated 07/2025: use numpy interp for 2015 convention mean pole values
+        add Desai et al. (2015) secular pole model
     Updated 04/2024: fixed annotations with multiple types
     Updated 04/2023: using pathlib to define and expand paths
         add wrapper function for interpolating daily EOP values
@@ -314,7 +315,7 @@ def iers_mean_pole(
     ):
     """
     Calculates the angular coordinates of the IERS Conventional Mean Pole (CMP)
-    or IERS Secular Pole (2018 convention) :cite:p:`Petit:2010tp`
+    or IERS Secular Pole (2018 convention) :cite:p:`Petit:2010tp,Desai:2015jr`
 
     Parameters
     ----------
@@ -327,6 +328,7 @@ def iers_mean_pole(
             - ``'2003'``
             - ``'2010'``
             - ``'2015'``
+            - ``'Desai'``
             - ``'2018'``
     input_file: str or pathlib.Path
         Full path to mean-pole.tab file provided by IERS
@@ -386,6 +388,12 @@ def iers_mean_pole(
             y[t] = np.interp(epoch, table[:,0], table[:,2],
                 left=kwargs['fill_value'], right=kwargs['fill_value'])
             flag[t] = (x[t] != kwargs['fill_value'])
+        # Secular pole model in Desai et al. (2015)
+        elif (convention == 'Desai'):
+            # calculate secular pole using equation 10a/b of Desai (2015)
+            x[t] = 0.05097 + 0.00062*(epoch - 2000.0)
+            y[t] = 0.33449 + 0.00348*(epoch - 2000.0)
+            flag[t] = True
         # Secular pole model in IERS Conventions 2018
         elif (convention == '2018'):
             # calculate secular pole
