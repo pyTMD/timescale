@@ -306,7 +306,7 @@ def update_finals_file(
         return
 
 # IERS mean or secular pole conventions
-_conventions = ('2003', '2010', '2015', '2018')
+_conventions = ('2003', '2010', '2015', 'Desai', '2018')
 # read table of mean pole values, calculate angular coordinates at epoch
 def iers_mean_pole(
         input_epoch: np.ndarray,
