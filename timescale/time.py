@@ -1073,6 +1073,12 @@ class Timescale:
         """
         _jd_j2000 = _jd_mjd + _mjd_j2000
         return (self.tt - _jd_j2000)/self.century
+    
+    @timescale.utilities.reify
+    def B(self):
+        """Time in Besselian years :cite:p:`Lieske:1979wv`
+        """
+        return 1900.0 + (self.MJD - 15019.81352) / 365.242198781
 
     @timescale.utilities.reify
     def ut1(self):

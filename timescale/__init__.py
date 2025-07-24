@@ -20,6 +20,13 @@ def from_deltatime(*args, **kwargs):
 # Julian dates
 def from_julian(ut1, **kwargs):
     return timescale.time.Timescale(ut1 - 2400000.5)
+# Besselian years
+def from_besselian(B, **kwargs):
+    """Wrapper for creating a ``Timescale`` object from Besselian years
+    """
+    # convert Besselian year to MJD
+    MJD = 15019.81352 + (B - 1900.0) * 365.242198781
+    return timescale.time.Timescale(MJD)
 # calendar dates
 def from_calendar(*args, **kwargs):
     """Wrapper for ``timescale.time.Timescale().from_calendar``

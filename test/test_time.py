@@ -245,6 +245,17 @@ def test_sidereal():
     expected = 20.96154017401333
     assert np.isclose(expected, 24.0*ts.st).all()
 
+def test_besselian():
+    """Test that the Besselian year matches expected outputs
+    """
+    # create timescale from Besselian year
+    ts = timescale.from_besselian(1900)
+    # expected Julian date for Besselian year 1900
+    expected = 2415020.31352
+    assert np.isclose(expected, ts.utc)
+    # check Besselian year
+    assert np.isclose(ts.B, 1900.0)
+
 def test_epochs():
     """Test that the epoch conversions match expected outputs
     """
