@@ -17,6 +17,7 @@ PROGRAM DEPENDENCIES:
 
 UPDATE HISTORY:
     Updated 07/2025: verify Bulletin-A entries are not already in merged file
+        add Besselian year conversion to Timescale class
     Updated 03/2025: added attributes for ut1_utc and gps_utc
     Updated 02/2025: added GLONASS as delta time option
         update GPS seconds calculation for output from timescale object
@@ -1073,6 +1074,12 @@ class Timescale:
         """
         _jd_j2000 = _jd_mjd + _mjd_j2000
         return (self.tt - _jd_j2000)/self.century
+    
+    @timescale.utilities.reify
+    def B(self):
+        """Time in Besselian years :cite:p:`Lieske:1979wv`
+        """
+        return 1900.0 + (self.MJD - 15019.81352) / 365.242198781
 
     @timescale.utilities.reify
     def ut1(self):
@@ -1080,6 +1087,15 @@ class Timescale:
         """
         # convert UT1-UTC to days
         return self.utc + self.ut1_utc/self.day
+    
+    @timescale.utilities.reify
+    def ut2(self):
+        """UT0 corrected for polar motion and seasonal variation
+        """
+        theta = 2.0*np.pi*self.B
+        ut2_ut1 = 0.022*np.sin(theta) - 0.012*np.cos(theta) - \
+            0.006*np.sin(2.0*theta) + 0.007*np.cos(2.0*theta)
+        return self.ut1 + ut2_ut1
 
     @timescale.utilities.reify
     def utc(self):
