@@ -164,6 +164,9 @@ def test_timescale():
     assert np.all(delta_time_epochs/np.timedelta64(1, 'ns') == 0)
     SHORTCUT = timescale.from_datetime(atlas_sdp_epoch)
     assert np.all(ATLAS.MJD == SHORTCUT.MJD)
+    # check year calculations
+    assert np.all(ATLAS.year == 2018.0)
+    assert np.isclose(ATLAS.nominal_year, 2018.0 + 0.5/365.25)
     # from deltatime
     ATLAS = timescale.time.Timescale().from_deltatime(0, epoch=(2018,1,1))
     assert np.all(ATLAS.MJD == 58119)
