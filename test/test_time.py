@@ -188,6 +188,9 @@ def test_timescale():
     assert np.allclose(ATLAS.to_deltatime(epoch='2018-01-01'), delta_time)
     SHORTCUT = timescale.from_julian(2458119.5 + delta_time)
     assert np.allclose(ATLAS.MJD, SHORTCUT.MJD)
+    # check year calculations
+    assert np.all(ATLAS.year == 2018.0)
+    assert np.isclose(ATLAS.nominal_year, 2018.0 + 0.5/365.25)
     # check constants
     assert (ATLAS.century == 36525.0)
     assert (ATLAS.day == 86400.0)

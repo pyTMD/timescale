@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 u"""
 time.py
-Written by Tyler Sutterley (07/2025)
+Written by Tyler Sutterley (08/2025)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 08/2025: add nominal years (365.25 days long) to Timescale class
     Updated 07/2025: verify Bulletin-A entries are not already in merged file
         add Besselian year conversion to Timescale class
     Updated 03/2025: added attributes for ut1_utc and gps_utc
@@ -117,11 +118,12 @@ _atlas_sdp_epoch = (2018, 1, 1, 0, 0, 0)
 # number of days between the Julian day epoch and standard epochs
 _jd_mjd = 2400000.5
 _jd_serial = 1721058.5
+_jd_gps = 2444244.5
 # number of days between MJD and the standard (common) epochs
 _mjd_ntp = 15020
 _mjd_cnes = 33282
 _mjd_unix = 40587
-_mjd_gps = 44244
+_mjd_gps = _jd_gps - _jd_mjd
 _mjd_tide = 48622
 _mjd_j2000 = 51544.5
 _mjd_atlas_sdp = 58119
@@ -967,7 +969,7 @@ class Timescale:
         """Seconds since 1980-01-06T00:00:00
         """
         # return the GPS time
-        return (self.utc - 2444244.5)*self.day + self.gps_utc
+        return (self.utc - _jd_gps)*self.day + self.gps_utc
 
     @timescale.utilities.reify
     def gps_utc(self):
@@ -978,7 +980,7 @@ class Timescale:
         # TAI time is ahead of GPS by 19 seconds
         _tai_gps = 19.0
         # convert from dynamic time to TAI
-        TAI = np.atleast_1d(self.tt - 2444244.5)*self.day - _tt_tai
+        TAI = np.atleast_1d(self.tt - _jd_gps)*self.day - _tt_tai
         # calculate the number of leap seconds
         return count_leap_seconds(TAI - _tai_gps)
 
@@ -990,7 +992,7 @@ class Timescale:
 
     @timescale.utilities.reify
     def J2000(self):
-        """Seconds since 2000-01-01T12:00:00
+        """Seconds (Terrestrial Time) since 2000-01-01T12:00:00
         """
         _jd_j2000 = _jd_mjd + _mjd_j2000
         return (self.tt - _jd_j2000)*self.day
@@ -1109,6 +1111,12 @@ class Timescale:
         """
         Y, M, D, h, m, s = convert_julian(self.utc, format='tuple')
         return convert_calendar_decimal(Y, M, D, hour=h, minute=m, second=s)
+    
+    @timescale.utilities.reify
+    def nominal_year(self):
+        """Universal Time (UT) as nominal years of 365.25 days
+        """
+        return 1992.0 + self.tide/365.25
 
     def min(self):
         """Minimum time value as a ``Timescale`` object
