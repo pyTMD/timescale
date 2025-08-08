@@ -49,5 +49,5 @@ def from_list(*args, **kwargs):
     """
     return timescale.time.Timescale().from_list(*args, **kwargs)
 
-# get semantic version from setuptools-scm
+# get version information
 __version__ = timescale.version.version
