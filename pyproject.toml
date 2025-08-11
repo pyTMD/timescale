@@ -1,9 +1,10 @@
 [build-system]
-requires = ["setuptools>=64", "setuptools_scm>=8"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "timescale"
+version = "0.0.9"
 description = "Python tools for time and astronomical calculations"
 keywords = [
     "Time",
@@ -33,10 +34,7 @@ dependencies = [
     "numpy",
     "python-dateutil",
     "scipy>=1.10.1",
-    "setuptools_scm",
 ]
-
-dynamic = ["version"]
 
 classifiers=[
     "Development Status :: 3 - Alpha",

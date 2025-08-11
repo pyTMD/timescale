@@ -25,7 +25,6 @@ This software is also dependent on other commonly used Python packages:
 - `lxml: processing XML and HTML in Python <https://pypi.python.org/pypi/lxml>`_
 - `numpy: Scientific Computing Tools For Python <https://www.numpy.org>`_
 - `scipy: Scientific Tools for Python <https://www.scipy.org/>`_
-- `setuptools_scm: manager for python package versions using scm metadata <https://pypi.org/project/setuptools-scm>`_
 
 Data Citations
 ##############
