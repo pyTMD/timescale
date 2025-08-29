@@ -2,8 +2,8 @@
 Licenses
 ========
 
-License
-=======
+MIT License
+===========
 
 The source code of ``timescale`` is licensed under a MIT license:
 
