@@ -60,7 +60,7 @@ Issues = "https://github.com/pyTMD/timescale/issues"
 
 [project.optional-dependencies]
 doc = ["docutils", "fontconfig", "freetype", "graphviz", "numpydoc", "sphinx", "sphinx-argparse>=0.4", "sphinx_rtd_theme"]
-dev = ["flake8", "pytest>=4.6", "pytest-cov"]
+dev = ["flake8", "pytest>=4.6", "pytest-cov", "pytest-xdist"]
 
 [tool.setuptools.packages.find]
 exclude = ["test*", "run*"]
@@ -68,6 +68,7 @@ exclude = ["test*", "run*"]
 [tool.pytest.ini_options]
 minversion = "6.0"
 norecursedirs = ".git"
+addopts = "-n auto --verbose --capture=no"
 python_files = [
     "test*.py"
 ]
