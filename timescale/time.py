@@ -718,15 +718,16 @@ class Timescale:
     # degrees to arcseconds
     deg2asec = 3600.0
 
-    def __init__(self, MJD=None):
+    def __init__(self, MJD=None, leaps=None):
         # leap seconds
-        self.leaps = None
+        self.leaps = leaps
         # modified Julian Days
         self.MJD = MJD
         # iterator
         self.__index__ = 0
 
-    def from_deltatime(self,
+    @classmethod
+    def from_deltatime(cls,
             delta_time: np.ndarray,
             epoch: str | tuple | list | np.ndarray,
             standard: str = 'UTC'
@@ -752,7 +753,7 @@ class Timescale:
             GPS_Time = convert_delta_time(delta_time, epoch1=epoch,
                 epoch2=_gps_epoch, scale=1.0)
             # calculate difference in leap seconds from start of epoch
-            self.leaps = count_leap_seconds(GPS_Time) - \
+            leaps = count_leap_seconds(GPS_Time) - \
                 count_leap_seconds(np.atleast_1d(GPS_Epoch_Time))
         elif (standard.upper() == 'LORAN'):
             # LORAN time is ahead of GPS time by 9 seconds
@@ -761,7 +762,7 @@ class Timescale:
             GPS_Time = convert_delta_time(delta_time - 9.0, epoch1=epoch,
                 epoch2=_gps_epoch, scale=1.0)
             # calculate difference in leap seconds from start of epoch
-            self.leaps = count_leap_seconds(GPS_Time) - \
+            leaps = count_leap_seconds(GPS_Time) - \
                 count_leap_seconds(np.atleast_1d(GPS_Epoch_Time))
         elif (standard.upper() == 'TAI'):
             # TAI time is ahead of GPS time by 19 seconds
@@ -770,19 +771,20 @@ class Timescale:
             GPS_Time = convert_delta_time(delta_time-19.0, epoch1=epoch,
                 epoch2=_gps_epoch, scale=1.0)
             # calculate difference in leap seconds from start of epoch
-            self.leaps = count_leap_seconds(GPS_Time) - \
+            leaps = count_leap_seconds(GPS_Time) - \
                 count_leap_seconds(np.atleast_1d(GPS_Epoch_Time))
         elif (standard.upper() == 'GLONASS'):
             # GLONASS time is ahead of UTC time by 3 hours
-            self.leaps = 3.0*3600.0
+            leaps = 3.0*3600.0
         else:
-            self.leaps = 0.0
+            leaps = 0.0
         # convert time to days relative to Modified Julian days in UTC
-        self.MJD = convert_delta_time(delta_time - self.leaps,
-            epoch1=epoch, epoch2=_mjd_epoch, scale=(1.0/self.day))
-        return self
+        MJD = convert_delta_time(delta_time - leaps,
+            epoch1=epoch, epoch2=_mjd_epoch, scale=(1.0/86400.0))
+        return cls(MJD=MJD, leaps=leaps)
 
-    def from_calendar(self,
+    @classmethod
+    def from_calendar(cls,
         year: np.ndarray,
         month: np.ndarray,
         day: np.ndarray,
@@ -817,14 +819,15 @@ class Timescale:
         second = np.array(second, dtype=np.float64)
         # calculate date in Modified Julian Days (MJD) from calendar date
         # MJD: days since November 17, 1858 (1858-11-17T00:00:00)
-        self.MJD = 367.0*year - \
+        MJD = 367.0*year - \
             np.floor(1.75*(year + np.floor((month + 9.0)/12.0))) - \
             np.floor(0.75*(np.floor((year + (month - 9.0)/7.0)/100.0) + 1.0)) + \
             np.floor(275.0*month/9.0) + day + hour/24.0 + minute/1440.0 + \
             second/86400.0 + 1721028.5 - _jd_mjd
-        return self
+        return cls(MJD=MJD)
 
-    def from_datetime(self, dtime: np.ndarray):
+    @classmethod
+    def from_datetime(cls, dtime: np.ndarray):
         """
         Reads a ``datetime`` array and converts into a ``Timescale`` object
 
@@ -835,10 +838,11 @@ class Timescale:
         """
         # convert delta time array from datetime object
         # to days relative to 1992-01-01T00:00:00
-        self.MJD = convert_datetime(dtime, epoch=_mjd_epoch)/self.day
-        return self
+        MJD = convert_datetime(dtime, epoch=_mjd_epoch)/86400.0
+        return cls(MJD=MJD)
 
-    def from_list(self, temp):
+    @classmethod
+    def from_list(cls, temp):
         """
         Reads a list of ``Timescale`` objects and converts into a single
         ``Timescale`` object
@@ -849,8 +853,8 @@ class Timescale:
             list of ``Timescale`` objects
         """
         # convert list of timescale objects to a single timescale object
-        self.MJD = np.array([t.MJD for t in temp])
-        return self
+        MJD = np.array([t.MJD for t in temp])
+        return cls(MJD=MJD)
 
     def to_calendar(self):
         """

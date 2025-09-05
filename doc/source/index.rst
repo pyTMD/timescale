@@ -110,6 +110,7 @@ Project Details
 
     project/Contributors.rst
     project/Licenses.rst
+    project/Testing.rst
     project/Citations.rst
 
 .. toctree::

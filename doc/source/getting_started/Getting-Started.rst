@@ -76,4 +76,7 @@ There are a few different ways to create a ``Timescale`` object:
     ts = timescale.from_julian(JD)
 
 ``Timescale`` objects can be used to convert epochs, convert to different time standards, convert to ``datetime`` arrays, and other time conversions.
-See the `API Reference <../api_reference/time.html#timescale.time.Timescale>`_ for more information.
+
+.. tip::
+    
+    See the `API Reference <../api_reference/time.html#timescale.time.Timescale>`_ for more information.
