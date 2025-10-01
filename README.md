@@ -1,39 +1,11 @@
----
-substitutions:
-  Documentation Status: |-
-    ```{image} https://readthedocs.org/projects/timescale/badge/?version=latest
-    :target: https://timescale.readthedocs.io/en/latest/?badge=latest
-    ```
-  License: |-
-    ```{image} https://img.shields.io/github/license/pyTMD/timescale
-    :target: https://github.com/pyTMD/timescale/blob/main/LICENSE
-    ```
-  PyPI: |-
-    ```{image} https://img.shields.io/pypi/v/timescale.svg
-    :target: https://pypi.python.org/pypi/timescale/
-    ```
-  commits-since: |-
-    ```{image} https://img.shields.io/github/commits-since/pyTMD/timescale/latest
-    :target: https://github.com/pyTMD/timescale/releases/latest
-    ```
-  conda-forge: |-
-    ```{image} https://img.shields.io/conda/vn/conda-forge/timescale
-    :target: https://anaconda.org/conda-forge/timescale
-    ```
-  zenodo: |-
-    ```{image} https://zenodo.org/badge/681330279.svg
-    :target: https://zenodo.org/badge/latestdoi/681330279
-    ```
----
-
 # timescale
 
-{{ License }}
-{{ Documentation Status }}
-{{ PyPI }}
-{{ conda-forge }}
-{{ commits-since }}
-{{ zenodo }}
+[![License](https://img.shields.io/github/license/pyTMD/timescale)](https://github.com/pyTMD/timescale/blob/main/LICENSE)
+[![Documentation Status](https://readthedocs.org/projects/timescale/badge/?version=latest)](https://timescale.readthedocs.io/en/latest/?badge=latest)
+[![PyPI](https://img.shields.io/pypi/v/timescale.svg)](https://pypi.python.org/pypi/timescale/)
+[![conda-forge](https://img.shields.io/conda/vn/conda-forge/timescale)](https://anaconda.org/conda-forge/timescale)
+[![commits-since](https://img.shields.io/github/commits-since/pyTMD/timescale/latest)](https://github.com/pyTMD/timescale/releases/latest)
+[![zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.5555395.svg)](https://doi.org/10.5281/zenodo.5555395)
 
 Python tools for time and astronomical calculations
 
@@ -78,12 +50,10 @@ python3 -m pip install git+https://github.com/pyTMD/timescale.git
 
 ## Download
 
-The program homepage is:
-
+The program homepage is:  
 <https://github.com/pyTMD/timescale>
 
-A zip archive of the latest version is available directly at:
-
+A zip archive of the latest version is available directly at:  
 <https://github.com/pyTMD/timescale/archive/main.zip>
 
 ## Disclaimer
@@ -95,7 +65,7 @@ The software is provided here for your convenience but *with no guarantees whats
 ## Contributing
 
 This project contains work and contributions from the [scientific community](./CONTRIBUTORS.rst).
-If you would like to contribute to the project, please have a look at the [open issues](https://github.com/pyTMD/timescale/issues) and [discussions board](https://github.com/pyTMD/timescale/discussions).
+If you would like to contribute to the project, please have a look at the [contribution guidelines](./doc/source/getting_started/Contributing.rst), [open issues](https://github.com/pyTMD/timescale/issues) and [discussions board](https://github.com/pyTMD/timescale/discussions).
 
 ## License
 
