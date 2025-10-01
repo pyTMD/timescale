@@ -39,6 +39,7 @@ jobs:
           flake8
           pytest
           pytest-cov
+          pytest-xdist
           cython
     - name: Lint with flake8
       run: |
