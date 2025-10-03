@@ -35,6 +35,29 @@ Development version from GitHub:
 python3 -m pip install git+https://github.com/pyTMD/timescale.git
 ```
 
+### Running with Pixi
+
+Alternatively, you can use [Pixi](https://pixi.sh/) for a streamlined workspace environment:
+
+1. Install Pixi following the [installation instructions](https://pixi.sh/latest/#installation)
+2. Clone the project repository:
+
+```bash
+git clone https://github.com/pyTMD/timescale.git
+```
+
+3. Move into the `timescale` directory
+
+```bash
+cd timescale
+```
+
+4. Install dependencies and start a shell to run programs:
+
+```bash
+pixi shell
+```
+
 ## Dependencies
 
 - [dateutil: powerful extensions to datetime](https://dateutil.readthedocs.io/en/stable/)

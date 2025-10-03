@@ -10,14 +10,16 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
+import os
 # import sys
 import datetime
+import warnings
 # sys.path.insert(0, os.path.abspath('.'))
 import importlib.metadata
 
 
 # -- Project information -----------------------------------------------------
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
 # package metadata
 metadata = importlib.metadata.metadata("timescale")
@@ -30,6 +32,10 @@ author = 'Tyler C. Sutterley'
 version = metadata["version"]
 # append "v" before the version
 release = f"v{version}"
+
+# suppress warnings in examples and documentation
+if on_rtd:
+    warnings.filterwarnings("ignore")
 
 # -- General configuration ---------------------------------------------------
 
