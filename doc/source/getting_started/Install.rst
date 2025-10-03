@@ -19,6 +19,9 @@ The simplest installation for most users will likely be using ``conda`` or ``mam
 
     conda update timescale
 
+Development Install
+###################
+
 To use the development repository, please fork ``timescale`` into your own account and then clone onto your system:
 
 .. code-block:: bash
@@ -36,3 +39,32 @@ The development version of ``timescale`` can also be installed directly from Git
 .. code-block:: bash
 
     python3 -m pip install --user git+https://github.com/pyTMD/timescale.git
+
+Package Management with ``pixi``
+################################
+
+Alternatively ``pixi`` can be used to create a `streamlined environment <https://pixi.sh/>`_ after cloning the repository:
+
+.. code-block:: bash
+
+    pixi install
+
+``pixi`` maintains isolated environments for each project, allowing for different versions of
+``timescale`` and its dependencies to be used without conflict. The ``pixi.lock`` file within the
+repository defines the required packages and versions for the environment.
+
+``pixi`` can also create shells for running programs within the environment:
+
+.. code-block:: bash
+
+    pixi shell
+
+To see the available tasks within the ``timescale`` workspace:
+
+.. code-block:: bash
+
+    pixi task list
+
+.. note::
+
+    ``pixi`` is under active development and may change in future releases
