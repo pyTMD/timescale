@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "timescale"
-version = "0.0.9"
+version = "0.1.0"
 description = "Python tools for time and astronomical calculations"
 keywords = [
     "Time",
