@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 u"""
 time.py
-Written by Tyler Sutterley (08/2025)
+Written by Tyler Sutterley (12/2025)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 12/2025: allow conversion to datetime be in different units
     Updated 08/2025: add nominal years (365.25 days long) to Timescale class
     Updated 07/2025: verify Bulletin-A entries are not already in merged file
         add Besselian year conversion to Timescale class
@@ -80,8 +81,11 @@ import scipy.interpolate
 import timescale.utilities
 
 # conversion factors between time units and seconds
-_to_sec = {'microseconds': 1e-6, 'microsecond': 1e-6,
-           'microsec': 1e-6, 'microsecs': 1e-6,
+_to_sec = {'nanoseconds': 1e-9, 'nanosecond': 1e-9,
+           'nanosec': 1e-9, 'nanosecs': 1e-9,
+           'nsec': 1e-9, 'nsecs': 1e-9, 'ns': 1e-9,
+           'microseconds': 1e-6, 'microsecond': 1e-6,
+           'microsec': 1e-6, 'microsecs': 1e-6, 'us': 1e-6,
            'milliseconds': 1e-3, 'millisecond': 1e-3,
            'millisec': 1e-3, 'millisecs': 1e-3,
            'msec': 1e-3, 'msecs': 1e-3, 'ms': 1e-3,
@@ -91,7 +95,8 @@ _to_sec = {'microseconds': 1e-6, 'microsecond': 1e-6,
            'min': 60.0, 'mins': 60.0,
            'hours': 3600.0, 'hour': 3600.0,
            'hr': 3600.0, 'hrs': 3600.0, 'h': 3600.0,
-           'day': 86400.0, 'days': 86400.0, 'd': 86400.0}
+           'day': 86400.0, 'days': 86400.0, 'd': 86400.0,
+           'D': 86400.0}
 # approximate conversions for longer periods
 _to_sec['mon'] = 30.0 * 86400.0
 _to_sec['month'] = 30.0 * 86400.0
@@ -892,7 +897,7 @@ class Timescale:
         # return the date in time (default days) since epoch
         return scale*np.array(self.MJD - delta_time_epochs, dtype=np.float64)
 
-    def to_datetime(self):
+    def to_datetime(self, unit='ns'):
         """
         Convert a ``Timescale`` object to a ``datetime`` array
 
@@ -901,12 +906,15 @@ class Timescale:
         dtime: np.ndarray
             ``numpy.datetime64`` array
         """
+        # verify that units are numpy datetime compatible
+        assert unit in ['D','h','m','s','ms','us','ns']
         # convert Modified Julian Day epoch to datetime variable
         epoch = np.datetime64(datetime.datetime(*_mjd_epoch))
-        # use nanoseconds to keep as much precision as possible
-        delta_time = np.atleast_1d(self.MJD*self.day*1e9).astype(np.int64)
+        # calculate the delta time in the specified units
+        scale = self.day*_from_sec[unit]
+        delta_time = np.atleast_1d(self.MJD*scale).astype(np.int64)
         # return the datetime array
-        return np.array(epoch + delta_time.astype('timedelta64[ns]'))
+        return np.array(epoch + delta_time.astype(f'timedelta64[{unit}]'))
 
     def to_string(self, unit: str = 's', **kwargs):
         """
@@ -919,7 +927,11 @@ class Timescale:
         **kwargs: dict
             keyword arguments for datetime formatting
         """
-        return np.datetime_as_string(self.to_datetime(), unit=unit, **kwargs)
+        return np.datetime_as_string(
+            self.to_datetime(unit=unit),
+            unit=unit,
+            **kwargs
+        )
 
     # PURPOSE: calculate the sum of a polynomial function of time
     def polynomial_sum(self, coefficients: list | np.ndarray, t: np.ndarray):

@@ -129,7 +129,7 @@ cwd = "doc"
 description = "Create HTML documentation with sphinx"
 
 [tool.pixi.feature.dev.tasks.test]
-args = [ "flags", { "arg" = "test", "default" = "." } ]
+args = [ { "arg" = "flags", "default" = "" }, { "arg" = "test", "default" = "." } ]
 cmd = "pytest {{ flags }} {{ test }}"
 cwd = "test"
 description = "Run the pytest suite"
