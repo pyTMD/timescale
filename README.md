@@ -87,7 +87,7 @@ The software is provided here for your convenience but *with no guarantees whats
 
 ## Contributing
 
-This project contains work and contributions from the [scientific community](./CONTRIBUTORS.rst).
+This project contains work and contributions from the [scientific community](./CONTRIBUTORS.md).
 If you would like to contribute to the project, please have a look at the [contribution guidelines](./doc/source/getting_started/Contributing.rst), [open issues](https://github.com/pyTMD/timescale/issues) and [discussions board](https://github.com/pyTMD/timescale/discussions).
 
 ## License

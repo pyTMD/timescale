@@ -6167,8 +6167,8 @@ packages:
   timestamp: 1755776172092
 - pypi: ./
   name: timescale
-  version: 0.1.0
-  sha256: 0e1de33f9f4acd8cd9b14772328653d4e8357c57a8993adc7c1f1c23dd8b5200
+  version: 0.1.1
+  sha256: 7407852dfdd8082e9072aa56621ecac7e30a68a029fd574e41decbe8c6337e31
   requires_dist:
   - lxml
   - numpy
