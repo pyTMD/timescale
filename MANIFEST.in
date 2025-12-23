@@ -3,5 +3,10 @@ prune .github*
 prune doc*
 prune run*
 prune test*
-exclude *.cfg
+exclude *.cff
+exclude *.md
 exclude *.yml
+exclude pixi.lock
+exclude .gitattributes
+exclude .gitignore
+exclude .zenodo.json
