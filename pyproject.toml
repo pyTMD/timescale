@@ -17,18 +17,15 @@ keywords = [
 
 authors = [
     {name = "Tyler Sutterley"},
-    {name = "Karen Alley"},
-    {name = "Kelly Brunt"},
-    {name = "Susan Howard"},
-    {name = "Laurie Padman"},
-    {name = "Matt Siegfried"},
     {email = "tsutterl@uw.edu"}
 ]
-maintainers = [{ name = "timescale contributors" }]
+maintainers = [
+    { name = "timescale contributors" }
+]
 license = {file = "LICENSE"}
 readme = {file = "README.md", content-type = "text/markdown"}
 
-requires-python = "~=3.6"
+requires-python = "~=3.9"
 dependencies = [
     "lxml",
     "numpy",
@@ -42,13 +39,12 @@ classifiers=[
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
@@ -83,8 +79,7 @@ source = [
     "test",
 ]
 omit = [
-    "setup.py",
-    "conf.py",
+    "doc/*",
 ]
 
 [tool.coverage.report]
@@ -94,13 +89,37 @@ precision = 2
 [tool.ruff]
 line-length = 80
 indent-width = 4
+exclude = [
+    ".git",
+    ".pixi",
+    "build",
+    "doc",
+    "run",
+    "test",
+]
+
+[tool.ruff.lint]
+select = [
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # ruff-specific
+    "RUF",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
 [tool.ruff.format]
-quote-style = "single"
 indent-style = "space"
+line-ending = "auto"
 docstring-code-format = false
 
 [tool.pixi.workspace]

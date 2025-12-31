@@ -1,6 +1,6 @@
 # This workflow will install Python dependencies and get the latest bulletin-A file
 
-name: Auto-Update Bulletin-A files
+name: Update Bulletin-A
 
 on:
   schedule:

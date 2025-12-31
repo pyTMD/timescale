@@ -6168,7 +6168,7 @@ packages:
 - pypi: ./
   name: timescale
   version: 0.1.1
-  sha256: 7407852dfdd8082e9072aa56621ecac7e30a68a029fd574e41decbe8c6337e31
+  sha256: 43965d2a04b4245f267d6a0333ee2967d9162636fa2e7c75db22cefd9e811980
   requires_dist:
   - lxml
   - numpy
@@ -6188,7 +6188,7 @@ packages:
   - pytest>=4.6 ; extra == 'dev'
   - pytest-cov ; extra == 'dev'
   - pytest-xdist ; extra == 'dev'
-  requires_python: ~=3.6
+  requires_python: ~=3.9
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_hd72426e_102.conda
   sha256: a84ff687119e6d8752346d1d408d5cf360dee0badd487a472aa8ddedfdc219e1

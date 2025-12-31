@@ -16,6 +16,7 @@
 *.gz
 *.iso
 *.jar
+*.mat
 *.rar
 *.tar
 *.zip
@@ -46,6 +47,8 @@ pythonenv*/
 venv/
 *build-commands.txt
 setup-miniconda-patched-environment.yml
+pytest.xml
+coverage.xml
 # OS generated files #
 ######################
 .DS_Store

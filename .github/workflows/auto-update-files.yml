@@ -1,6 +1,6 @@
 # This workflow will install Python dependencies and update the time and EOP files
 
-name: Auto-Update Files
+name: Update Data
 
 on:
   schedule:
