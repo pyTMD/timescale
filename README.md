@@ -1,13 +1,39 @@
 # timescale
 
-[![License](https://img.shields.io/github/license/pyTMD/timescale)](https://github.com/pyTMD/timescale/blob/main/LICENSE)
-[![Documentation Status](https://readthedocs.org/projects/timescale/badge/?version=latest)](https://timescale.readthedocs.io/en/latest/?badge=latest)
-[![PyPI](https://img.shields.io/pypi/v/timescale.svg)](https://pypi.python.org/pypi/timescale/)
-[![conda-forge](https://img.shields.io/conda/vn/conda-forge/timescale)](https://anaconda.org/conda-forge/timescale)
-[![commits-since](https://img.shields.io/github/commits-since/pyTMD/timescale/latest)](https://github.com/pyTMD/timescale/releases/latest)
-[![zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.5555395.svg)](https://doi.org/10.5281/zenodo.5555395)
-
 Python tools for time and astronomical calculations
+
+## About
+
+<table>
+  <tr>
+    <td><b>Version:</b></td>
+    <td>
+        <a href="https://pypi.python.org/pypi/timescale/" alt="PyPI"><img src="https://img.shields.io/pypi/v/timescale.svg"></a>
+        <a href="https://anaconda.org/conda-forge/timescale" alt="conda-forge"><img src="https://img.shields.io/conda/vn/conda-forge/timescale"></a>
+        <a href="https://github.com/pyTMD/timescale/releases/latest" alt="commits-since"><img src="https://img.shields.io/github/commits-since/pyTMD/timescale/latest"></a>
+    </td>
+  </tr>
+  <tr>
+    <td><b>Citation:</b></td>
+    <td>
+        <a href="https://doi.org/10.5281/zenodo.8284224" alt="zenodo"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.8284224.svg"></a>
+    </td>
+  </tr>
+  <tr>
+    <td><b>Tests:</b></td>
+    <td>
+        <a href="https://timescale.readthedocs.io/en/latest/?badge=latest" alt="Documentation Status"><img src="https://readthedocs.org/projects/timescale/badge/?version=latest"></a>
+        <a href="https://github.com/pyTMD/timescale/actions/workflows/python-request.yml" alt="Build"><img src="https://github.com/pyTMD/timescale/actions/workflows/python-request.yml/badge.svg"></a>
+        <a href="https://github.com/pyTMD/timescale/actions/workflows/ruff-format.yml" alt="Ruff"><img src="https://github.com/pyTMD/timescale/actions/workflows/ruff-format.yml/badge.svg"></a>
+    </td>
+  </tr>
+  <tr>
+    <td><b>License:</b></td>
+    <td>
+        <a href="https://github.com/pyTMD/timescale/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/pyTMD/timescale"></a>
+    </td>
+  </tr>
+</table>
 
 For more information: see the documentation at [timescale.readthedocs.io](https://timescale.readthedocs.io/)
 
