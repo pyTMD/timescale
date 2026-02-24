@@ -57,10 +57,12 @@ Continuous Integration
 ^^^^^^^^^^^^^^^^^^^^^^
 We use `GitHub Actions <https://github.com/pyTMD/timescale/actions>`_ continuous integration (CI) services to build and test the project on Linux (``ubuntu-latest``), Mac (``macos-latest``), and Windows (``windows-latest``) Operating Systems.
 The configuration files for this service are in the `GitHub workflows <https://github.com/pyTMD/timescale/tree/main/.github/workflows>`_ directory.
-The workflows use ``pixi`` to install the required dependencies and build the custom environment.
+Most of the workflows use ``pixi`` to install the required dependencies and build the custom environment.
 
 The GitHub Actions jobs include:
 
+* Verifying that the code meets style guidelines using `ruff <https://docs.astral.sh/ruff/>`_
 * Running `flake8 <https://flake8.pycqa.org/en/latest/>`_ to check the code for style and compilation errors
-* Running the test suite on multiple combinations of OS and Python version
+* Running the test suite on different operating systems
+* Creating a comment with test coverage statistics
 * Uploading source and wheel distributions to `PyPI <https://pypi.org/project/timescale/>`_ (on releases)
