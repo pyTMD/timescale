@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 eop.py
-Written by Tyler Sutterley (07/2025)
+Written by Tyler Sutterley (02/2026)
 Utilities for maintaining and calculating Earth Orientation Parameters (EOP)
 
 PYTHON DEPENDENCIES:
@@ -14,6 +14,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 02/2026: added argument to include predicted EOP values from finals
     Updated 07/2025: use numpy interp for 2015 convention mean pole values
         add Desai et al. (2015) secular pole model
     Updated 04/2024: fixed annotations with multiple types
@@ -423,7 +424,10 @@ def iers_mean_pole(input_epoch: np.ndarray, convention: str = "2018", **kwargs):
 
 
 # PURPOSE: read daily earth orientation parameters (EOP) file from IERS
-def iers_daily_EOP(input_file: str | pathlib.Path = _finals_file):
+def iers_daily_EOP(
+    input_file: str | pathlib.Path = _finals_file,
+    include_predictions: bool = False,
+):
     """
     Read daily earth orientation parameters (EOP) file from IERS
     :cite:p:`Petit:2010tp`
@@ -432,6 +436,8 @@ def iers_daily_EOP(input_file: str | pathlib.Path = _finals_file):
     ----------
     input_file: str or Pathlib.Path
         full path to IERS EOP "finals" file
+    include_predictions: bool, default False
+        include predicted values in output arrays
 
     Returns
     -------
@@ -473,16 +479,38 @@ def iers_daily_EOP(input_file: str | pathlib.Path = _finals_file):
         j = i + 9
         dinput["y"][counter] = np.float64(line[i:j])
         counter += 1
+    # if including predicted values, read through rest of the values
+    if include_predictions:
+        next_flag = "P"
+        while (flag == "P") and (next_flag == "P"):
+            line = file_contents[counter]
+            i = 2 + 2 + 2 + 1
+            j = i + 8
+            dinput["MJD"][counter] = np.float64(line[i:j])
+            i = j + 1
+            flag = line[i]
+            i += 2
+            j = i + 9
+            dinput["x"][counter] = np.float64(line[i:j])
+            i = j + 10
+            j = i + 9
+            dinput["y"][counter] = np.float64(line[i:j])
+            counter += 1
+            i = 2 + 2 + 2 + 1 + 8 + 1
+            next_flag = file_contents[counter][i]
     # reduce to data values
     dinput["MJD"] = dinput["MJD"][:counter]
     dinput["x"] = dinput["x"][:counter]
     dinput["y"] = dinput["y"][:counter]
-    # return the date, flag and polar motion values
+    # return the date and polar motion values
     return dinput
 
 
 def iers_polar_motion(
-    MJD: float | np.ndarray, file: str | pathlib.Path = _finals_file, **kwargs
+    MJD: float | np.ndarray,
+    file: str | pathlib.Path = _finals_file,
+    include_predictions: bool = False,
+    **kwargs,
 ):
     """
     Interpolates daily earth orientation parameters (EOP) file from IERS
@@ -494,6 +522,8 @@ def iers_polar_motion(
         Modified Julian Date for interpolated measurements
     file: str or Pathlib.Path
         default path to IERS EOP "finals" file
+    include_predictions: bool, default False
+        include predicted EOP values in interpolation
     k: int
         Degree of the spline fit
     s: int or float
@@ -506,11 +536,13 @@ def iers_polar_motion(
     py: np.ndarray
         Angular coordinate y [arcsec]
     """
-    # set default parameters
+    # set default keyword arguments
     kwargs.setdefault("k", 3)
     kwargs.setdefault("s", 0)
     # read IERS daily polar motion values
-    EOP = timescale.eop.iers_daily_EOP(file)
+    EOP = timescale.eop.iers_daily_EOP(
+        file, include_predictions=include_predictions
+    )
     # interpolate daily polar motion values to MJD using cubic splines
     xSPL = scipy.interpolate.UnivariateSpline(EOP["MJD"], EOP["x"], **kwargs)
     ySPL = scipy.interpolate.UnivariateSpline(EOP["MJD"], EOP["y"], **kwargs)
