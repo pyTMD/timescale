@@ -463,42 +463,55 @@ def iers_daily_EOP(
     dinput["x"] = np.zeros((n_lines))
     dinput["y"] = np.zeros((n_lines))
     # for each line in the file
+    # as a default only read the IERS observed values
     flag = "I"
+    next_flag = "I"
     counter = 0
-    while flag == "I":
+    # read through observation lines
+    while (flag == "I") and (next_flag == "I"):
         line = file_contents[counter]
         i = 2 + 2 + 2 + 1
         j = i + 8
         dinput["MJD"][counter] = np.float64(line[i:j])
         i = j + 1
         flag = line[i]
+        # get IERS observed x and y values
         i += 2
         j = i + 9
         dinput["x"][counter] = np.float64(line[i:j])
         i = j + 10
         j = i + 9
         dinput["y"][counter] = np.float64(line[i:j])
+        # add to counter
         counter += 1
-    # if including predicted values, read through rest of the values
+        # check next flag
+        i = 2 + 2 + 2 + 1 + 8 + 1
+        next_flag = file_contents[counter][i]
+    # if including predicted values: read through rest of the values
     if include_predictions:
+        # reset flags and counter to read through predicted values
+        flag = "P"
         next_flag = "P"
-        while (flag == "P") and (next_flag == "P"):
+        while (flag == "P") and (next_flag == "P") and (counter < n_lines):
             line = file_contents[counter]
             i = 2 + 2 + 2 + 1
             j = i + 8
             dinput["MJD"][counter] = np.float64(line[i:j])
             i = j + 1
             flag = line[i]
+            # get predicted x and y values
             i += 2
             j = i + 9
             dinput["x"][counter] = np.float64(line[i:j])
             i = j + 10
             j = i + 9
             dinput["y"][counter] = np.float64(line[i:j])
+            # add to counter
             counter += 1
+            # check next flag
             i = 2 + 2 + 2 + 1 + 8 + 1
             next_flag = file_contents[counter][i]
-    # reduce to data values
+    # reduce to data (or predicted) values
     dinput["MJD"] = dinput["MJD"][:counter]
     dinput["x"] = dinput["x"][:counter]
     dinput["y"] = dinput["y"][:counter]

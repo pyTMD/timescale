@@ -67,3 +67,14 @@ def test_read_EOP(EPOCH):
     my = -(py - mpy)
     # check validity of differentials
     assert np.all(np.isfinite(mx)) & np.all(np.isfinite(my))
+
+def test_read_finals():
+    # read IERS daily polar motion values
+    pole_tide_file = timescale.utilities.get_data_path(['data','finals.all'])
+    I = timescale.eop.iers_daily_EOP(pole_tide_file, include_predictions=False)
+    P = timescale.eop.iers_daily_EOP(pole_tide_file, include_predictions=True)
+    # check validity
+    assert np.all(np.isfinite(I['x'])) & np.all(np.isfinite(I['y']))
+    assert np.all(np.isfinite(P['x'])) & np.all(np.isfinite(P['y']))
+    # check that there are more predicted values than observed values
+    assert np.max(P['MJD']) > np.max(I['MJD'])
