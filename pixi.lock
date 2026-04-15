@@ -6168,7 +6168,7 @@ packages:
 - pypi: ./
   name: timescale
   version: 0.1.1
-  sha256: 43965d2a04b4245f267d6a0333ee2967d9162636fa2e7c75db22cefd9e811980
+  sha256: 3e6d5ceadf2a1fe57f9e4eb59feb9646950c489c34ba8c2e1c7bf2eff9bbebf0
   requires_dist:
   - lxml
   - numpy
