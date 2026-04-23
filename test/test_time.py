@@ -212,7 +212,7 @@ def test_earth_rotation_angle():
     assert np.isclose(360.0*expected, ts.era).all()
 
 def test_from_range():
-    """Test that the from range functions expected outputs
+    """Test that from_range functions produce expected outputs
     """
     ts = timescale.from_range('2020-01-01','2020-02-01',1,'D')
     exp = 58849 + np.arange(32)
