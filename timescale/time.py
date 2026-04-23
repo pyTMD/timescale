@@ -895,9 +895,9 @@ class Timescale:
         ----------
         year: np.ndarray
             calendar year
-        month: np.ndarray
+        month: np.ndarray or float, default 1.0
             month of the year
-        day: np.ndarray
+        day: np.ndarray or float, default 1.0
             day of the month
         hour: np.ndarray or float, default 0.0
             hour of the day
