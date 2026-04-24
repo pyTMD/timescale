@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 utilities.py
-Written by Tyler Sutterley (08/2024)
+Written by Tyler Sutterley (04/2026)
 Download and management utilities for syncing time and auxiliary files
 
 PYTHON DEPENDENCIES:
@@ -11,6 +11,8 @@ PYTHON DEPENDENCIES:
         https://dateutil.readthedocs.io/en/stable/
 
 UPDATE HISTORY:
+    Updated 04/2026: raise original exceptions in cases of HTTPError/URLError
+        allow additional keyword arguments to http functions
     Updated 08/2024: generalize hash function to use any available algorithm
     Updated 11/2023: updated ssl context to fix deprecation error
     Forked 08/2023: forked from pyTMD file, http and ftp utility functions
@@ -539,7 +541,8 @@ def from_ftp(
     hash: str = "",
     chunk: int = 8192,
     verbose: bool = False,
-    fid=sys.stdout,
+    fid: object = sys.stdout,
+    label: str | None = None,
     mode: oct = 0o775,
 ):
     """
@@ -563,8 +566,10 @@ def from_ftp(
         chunk size for transfer encoding
     verbose: bool, default False
         print file transfer information
-    fid: obj, default sys.stdout
-        open file object to print if verbose
+    fid: object, default sys.stdout
+        Open file object for logging file transfers if verbose
+    label: str, default None
+        Label for logging file transfer information if verbose
     mode: oct, default 0o775
         permissions mode of output local file
 
@@ -579,6 +584,9 @@ def from_ftp(
     # verify inputs for remote ftp host
     if isinstance(HOST, str):
         HOST = url_split(HOST)
+    # set default label for logging
+    if label is None:
+        label = f"{posixpath.join(*HOST)} -->\n\t{local}"
     # try downloading from ftp
     try:
         # try to connect to ftp host
@@ -609,8 +617,7 @@ def from_ftp(
             # create directory if non-existent
             local.parent.mkdir(mode=mode, parents=True, exist_ok=True)
             # print file information
-            args = (posixpath.join(*HOST), str(local))
-            logging.info("{0} -->\n\t{1}".format(*args))
+            logging.info(label)
             # store bytes to file using chunked transfer encoding
             remote_buffer.seek(0)
             with local.open(mode="wb") as f:
@@ -657,30 +664,34 @@ def _set_ssl_context_options(context: ssl.SSLContext) -> None:
 _default_ssl_context = _create_ssl_context_no_verify()
 
 
-# PURPOSE: check internet connection
+# PURPOSE: check connection with http host
 def check_connection(
     HOST: str,
     context: ssl.SSLContext = _default_ssl_context,
+    timeout: int = 20,
 ):
     """
-    Check internet connection with http host
+    Check internet connection with ``http`` host
 
     Parameters
     ----------
     HOST: str
-        remote http host
-    context: obj, default timescale.utilities._default_ssl_context
-        SSL context for ``urllib`` opener object
+        Remote ``http`` host
+    context: obj, default pyTMD.utilities._default_ssl_context
+        ``SSL`` context for ``urllib`` opener object
+    timeout: int, default 20
+        Timeout in seconds for blocking operations
     """
     # attempt to connect to http host
     try:
-        urllib2.urlopen(HOST, timeout=20, context=context)
+        urllib2.urlopen(HOST, timeout=timeout, context=context)
     except urllib2.HTTPError as exc:
         logging.debug(exc.code)
-        raise RuntimeError(exc.reason) from exc
+        raise
     except urllib2.URLError as exc:
         logging.debug(exc.reason)
-        raise RuntimeError("Check internet connection") from exc
+        exc.message = "Check internet connection"
+        raise
     else:
         return True
 
@@ -694,6 +705,7 @@ def http_list(
     format: str = "%Y-%m-%d %H:%M",
     pattern: str = "",
     sort: bool = False,
+    **kwargs,
 ):
     """
     List a directory on an Apache http Server
@@ -728,15 +740,15 @@ def http_list(
     # try listing from http
     try:
         # Create and submit request.
-        request = urllib2.Request(posixpath.join(*HOST))
+        request = urllib2.Request(posixpath.join(*HOST), **kwargs)
         response = urllib2.urlopen(request, timeout=timeout, context=context)
     except urllib2.HTTPError as exc:
         logging.debug(exc.code)
-        raise RuntimeError(exc.reason) from exc
+        raise
     except urllib2.URLError as exc:
         logging.debug(exc.reason)
-        msg = "List error from {0}".format(posixpath.join(*HOST))
-        raise Exception(msg) from exc
+        exc.message = "Check internet connection"
+        raise
     else:
         # read and parse request for files (column names and modified times)
         tree = lxml.etree.parse(response, parser)
@@ -771,8 +783,10 @@ def from_http(
     hash: str = "",
     chunk: int = 16384,
     verbose: bool = False,
-    fid=sys.stdout,
+    fid: object = sys.stdout,
+    label: str | None = None,
     mode: oct = 0o775,
+    **kwargs,
 ):
     """
     Download a file from a http host
@@ -793,8 +807,10 @@ def from_http(
         chunk size for transfer encoding
     verbose: bool, default False
         print file transfer information
-    fid: obj, default sys.stdout
-        open file object to print if verbose
+    fid: object, default sys.stdout
+        Open file object for logging file transfers if verbose
+    label: str, default None
+        Label for logging file transfer information if verbose
     mode: oct, default 0o775
         permissions mode of output local file
 
@@ -809,10 +825,13 @@ def from_http(
     # verify inputs for remote http host
     if isinstance(HOST, str):
         HOST = url_split(HOST)
+    # set default label for logging
+    if label is None:
+        label = f"{posixpath.join(*HOST)} -->\n\t{local}"
     # try downloading from http
     try:
         # Create and submit request.
-        request = urllib2.Request(posixpath.join(*HOST))
+        request = urllib2.Request(posixpath.join(*HOST), **kwargs)
         response = urllib2.urlopen(request, timeout=timeout, context=context)
     except:
         raise Exception("Download error from {0}".format(posixpath.join(*HOST)))
@@ -832,8 +851,7 @@ def from_http(
             # create directory if non-existent
             local.parent.mkdir(mode=mode, parents=True, exist_ok=True)
             # print file information
-            args = (posixpath.join(*HOST), str(local))
-            logging.info("{0} -->\n\t{1}".format(*args))
+            logging.info(label)
             # store bytes to file using chunked transfer encoding
             remote_buffer.seek(0)
             with local.open(mode="wb") as f:
