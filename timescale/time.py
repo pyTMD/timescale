@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 time.py
-Written by Tyler Sutterley (12/2025)
+Written by Tyler Sutterley (04/2026)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,8 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 04/2026: added endpoint option (defaults to True) to date_range
+        added default day and month values to from_calendar function
     Updated 12/2025: allow conversion to datetime be in different units
     Updated 08/2025: add nominal years (365.25 days long) to Timescale class
     Updated 07/2025: verify Bulletin-A entries are not already in merged file
@@ -269,6 +271,7 @@ def date_range(
     end: str | np.datetime64 | datetime.datetime,
     step: int | float = 1,
     units: str = "D",
+    endpoint: bool = True,
 ):
     """
     Create a range of dates
@@ -292,6 +295,8 @@ def date_range(
             - ``'m'``: minute
             - ``'s'``: second
             - ``'ms'``: millisecond
+    endpoint: bool, default True
+        If True, include the end date in the output
     """
     # convert start and end dates to datetime64
     if isinstance(start, str):
@@ -299,7 +304,8 @@ def date_range(
     if isinstance(end, str):
         end = np.array(parse(end), dtype=f"datetime64[{units}]")
     # create date range
-    return np.arange(start, end + step, step)
+    stop = end + step if endpoint else end
+    return np.arange(start, stop, step)
 
 
 # days per month in a leap and a standard year
@@ -877,8 +883,8 @@ class Timescale:
     def from_calendar(
         cls,
         year: np.ndarray,
-        month: np.ndarray,
-        day: np.ndarray,
+        month: np.ndarray | float = 1.0,
+        day: np.ndarray | float = 1.0,
         hour: np.ndarray | float = 0.0,
         minute: np.ndarray | float = 0.0,
         second: np.ndarray | float = 0.0,
@@ -890,9 +896,9 @@ class Timescale:
         ----------
         year: np.ndarray
             calendar year
-        month: np.ndarray
+        month: np.ndarray or float, default 1.0
             month of the year
-        day: np.ndarray
+        day: np.ndarray or float, default 1.0
             day of the month
         hour: np.ndarray or float, default 0.0
             hour of the day

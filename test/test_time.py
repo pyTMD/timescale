@@ -211,6 +211,16 @@ def test_earth_rotation_angle():
     expected = 0.8730204642501604
     assert np.isclose(360.0*expected, ts.era).all()
 
+def test_from_range():
+    """Test that from_range functions produce expected outputs
+    """
+    ts = timescale.from_range('2020-01-01','2020-02-01',1,'D')
+    exp = 58849 + np.arange(32)
+    assert np.all(ts.MJD == exp) 
+    ts = timescale.from_range('2020-01-01','2020-02-01',1,'D',endpoint=False)
+    exp = 58849 + np.arange(31)
+    assert np.all(ts.MJD == exp) 
+
 def test_gps_week():
     """Test that the GPS week matches expected outputs
     """

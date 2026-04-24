@@ -93,7 +93,6 @@ exclude = [
     ".git",
     ".pixi",
     "build",
-    "doc",
     "run",
     "test",
 ]

@@ -11,18 +11,7 @@ on:
 jobs:
   build:
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        python-version: [3.11]
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: ${{ matrix.python-version }}
-    defaults:
-      run:
-        shell: bash -l {0}
-
+    runs-on: ubuntu-slim
     steps:
     - uses: actions/checkout@v4
     - name: Set up pixi environment
