@@ -304,7 +304,8 @@ def date_range(
     if isinstance(end, str):
         end = np.array(parse(end), dtype=f"datetime64[{units}]")
     # create date range
-    return np.arange(start, end + endpoint * step, step)
+    stop = end + step if endpoint else end
+    return np.arange(start, stop, step)
 
 
 # days per month in a leap and a standard year
