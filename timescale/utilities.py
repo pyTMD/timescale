@@ -13,6 +13,8 @@ PYTHON DEPENDENCIES:
 UPDATE HISTORY:
     Updated 04/2026: raise original exceptions in cases of HTTPError/URLError
         allow additional keyword arguments to http functions
+        added function to parse JSON responses from https
+        added functions for accessing NASA Earthdata Cumulus AWS S3 endpoints
     Updated 08/2024: generalize hash function to use any available algorithm
     Updated 11/2023: updated ssl context to fix deprecation error
     Forked 08/2023: forked from pyTMD file, http and ftp utility functions
@@ -21,7 +23,7 @@ UPDATE HISTORY:
         make urs a keyword argument in CCDIS list and download functions
         add case for JPL kernel file download where local path is defined
     Updated 04/2023: using pathlib to define and expand paths
-        added function to download ephemeride files from JPL SSD server
+        added function to download ephemerides files from JPL SSD server
     Updated 03/2023: add basic variable typing to function inputs
     Updated 01/2023: updated SSL context to fix some deprecation warnings
     Updated 11/2022: added list program for IERS Bulletin-A https server
@@ -65,6 +67,7 @@ import logging
 import pathlib
 import builtins
 import warnings
+import importlib
 import posixpath
 import subprocess
 import lxml.etree
@@ -74,9 +77,10 @@ import dateutil.parser
 if sys.version_info[0] == 2:
     from urllib import quote_plus
     from cookielib import CookieJar
+    from urlparse import urlparse
     import urllib2
 else:
-    from urllib.parse import quote_plus
+    from urllib.parse import quote_plus, urlparse
     from http.cookiejar import CookieJar
     import urllib.request as urllib2
 
@@ -89,7 +93,7 @@ def get_data_path(relpath: list | str | pathlib.Path):
     Parameters
     ----------
     relpath: list, str or pathlib.Path
-        relative path
+        Relative path
     """
     # current file path
     filename = inspect.getframeinfo(inspect.currentframe()).filename
@@ -118,6 +122,96 @@ class reify(object):
         return val
 
 
+def import_dependency(
+    name: str,
+    extra: str = "",
+    raise_exception: bool = False,
+):
+    """
+    Import an optional dependency
+
+    Adapted from ``pandas.compat._optional::import_optional_dependency``
+
+    Parameters
+    ----------
+    name: str
+        Module name
+    extra: str, default ""
+        Additional text to include in the ``ImportError`` message
+    raise_exception: bool, default False
+        Raise an ``ImportError`` if the module is not found
+
+    Returns
+    -------
+    module: obj
+        Imported module
+    """
+    # check if the module name is a string
+    msg = f"Invalid module name: '{name}'; must be a string"
+    assert isinstance(name, str), msg
+    # default error if module cannot be imported
+    err = f"Missing optional dependency '{name}'. {extra}"
+    module = type("module", (), {})
+    # try to import the module
+    try:
+        module = importlib.import_module(name)
+    except (ImportError, ModuleNotFoundError) as exc:
+        if raise_exception:
+            raise ImportError(err) from exc
+        else:
+            logging.debug(err)
+    # return the module
+    return module
+
+
+def dependency_available(
+    name: str,
+    minversion: str | None = None,
+):
+    """
+    Checks whether a module is installed without importing it
+
+    Adapted from ``xarray.namedarray.utils.module_available``
+
+    Parameters
+    ----------
+    name: str
+        Module name
+    minversion : str, optional
+        Minimum version of the module
+
+    Returns
+    -------
+    available : bool
+        Whether the module is installed
+    """
+    # check if module is available
+    if importlib.util.find_spec(name) is None:
+        return False
+    # check if the version is greater than the minimum required
+    if minversion is not None:
+        version = importlib.metadata.version(name)
+        return version >= minversion
+    # return if both checks are passed
+    return True
+
+
+def is_valid_url(url: str) -> bool:
+    """
+    Checks if a string is a valid URL
+
+    Parameters
+    ----------
+    url: str
+        URL to check
+    """
+    try:
+        result = urlparse(str(url))
+        return all([result.scheme, result.netloc])
+    except AttributeError:
+        return False
+
+
 # PURPOSE: platform independent file opener
 def file_opener(filename: str | pathlib.Path):
     """
@@ -137,17 +231,39 @@ def file_opener(filename: str | pathlib.Path):
         subprocess.call(["xdg-open", filename])
 
 
+def compressuser(filename: str | pathlib.Path):
+    """
+    Tilde-compress a file to be relative to the home directory
+
+    Parameters
+    ----------
+    filename: str or pathlib.Path
+        Input filename to tilde-compress
+    """
+    # attempt to compress filename relative to home directory
+    filename = pathlib.Path(filename).expanduser().absolute()
+    try:
+        relative_to = filename.relative_to(pathlib.Path().home())
+    except (ValueError, AttributeError):
+        return filename
+    else:
+        return pathlib.Path("~").joinpath(relative_to)
+
+
 # PURPOSE: get the hash value of a file
-def get_hash(local: str | io.IOBase | pathlib.Path, algorithm: str = "md5"):
+def get_hash(
+    local: str | io.IOBase | pathlib.Path,
+    algorithm: str = "md5",
+):
     """
     Get the hash value from a local file or ``BytesIO`` object
 
     Parameters
     ----------
     local: obj, str or pathlib.Path
-        BytesIO object or path to file
+        ``BytesIO`` object or path to file
     algorithm: str, default 'md5'
-        hashing algorithm for checksum validation
+        Hashing algorithm for checksum validation
     """
     # check if open file object or if local file exists
     if isinstance(local, io.IOBase):
@@ -174,7 +290,10 @@ def get_hash(local: str | io.IOBase | pathlib.Path, algorithm: str = "md5"):
 
 
 # PURPOSE: get the git hash value
-def get_git_revision_hash(refname: str = "HEAD", short: bool = False):
+def get_git_revision_hash(
+    refname: str = "HEAD",
+    short: bool = False,
+):
     """
     Get the ``git`` hash value for a particular reference
 
@@ -214,14 +333,14 @@ def get_git_status():
 # PURPOSE: recursively split a url path
 def url_split(s: str):
     """
-    Recursively split a url path into a list
+    Recursively split a URL path into a list
 
     Parameters
     ----------
     s: str
-        url string
+        URL string
     """
-    head, tail = posixpath.split(s)
+    head, tail = posixpath.split(str(s))
     if head in ("http:", "https:", "ftp:", "s3:"):
         return (s,)
     elif head in ("", posixpath.sep):
@@ -237,7 +356,7 @@ def convert_arg_line_to_args(arg_line):
     Parameters
     ----------
     arg_line: str
-        line string containing a single argument and/or comments
+        Line string containing a single argument and/or comments
     """
     # remove commented lines and after argument comments
     for arg in re.sub(r"\#(.*?)$", r"", arg_line).split():
@@ -254,15 +373,15 @@ def build_logger(name: str, **kwargs):
     Parameters
     ----------
     name: str
-        name of the logger
+        Name of the logger
     format: str
-        event description message format
+        Event description message format
     level: int, default logging.CRITICAL
-        lowest-severity log message logger will handle
+        Lowest-severity log message logger will handle
     propagate: bool, default False
-        events logged will be passed to higher level handlers
+        Events logged will be passed to higher level handlers
     stream: obj or NoneType, default None
-        specified stream to initialize StreamHandler
+        Specified stream to initialize ``StreamHandler``
     """
     # set default arguments
     kwargs.setdefault("format", "%(levelname)s:%(name)s:%(message)s")
@@ -318,16 +437,19 @@ def roman_to_int(roman: str):
 
 
 # PURPOSE: returns the Unix timestamp value for a formatted date string
-def get_unix_time(time_string: str, format: str = "%Y-%m-%d %H:%M:%S"):
+def get_unix_time(
+    time_string: str,
+    format: str = "%Y-%m-%d %H:%M:%S",
+):
     """
     Get the Unix timestamp value for a formatted date string
 
     Parameters
     ----------
     time_string: str
-        formatted time string to parse
+        Formatted time string to parse
     format: str, default '%Y-%m-%d %H:%M:%S'
-        format for input time string
+        Format for input time string
     """
     try:
         parsed_time = time.strptime(time_string.rstrip(), format)
@@ -371,7 +493,7 @@ def even(value: float):
     Parameters
     ----------
     value: float
-        number to be rounded
+        Number to be rounded
     """
     return 2 * int(value // 2)
 
@@ -384,7 +506,7 @@ def ceil(value: float):
     Parameters
     ----------
     value: float
-        number to be rounded upward
+        Number to be rounded upward
     """
     return -int(-value // 1)
 
@@ -402,11 +524,11 @@ def copy(
     Parameters
     ----------
     source: str
-        source file
+        Source file
     destination: str
-        copied destination file
+        Copied destination file
     move: bool, default False
-        remove the source file
+        Remove the source file
     """
     source = pathlib.Path(source).expanduser().absolute()
     destination = pathlib.Path(destination).expanduser().absolute()
@@ -421,19 +543,21 @@ def copy(
 
 # PURPOSE: check ftp connection
 def check_ftp_connection(
-    HOST: str, username: str | None = None, password: str | None = None
+    HOST: str,
+    username: str | None = None,
+    password: str | None = None,
 ):
     """
-    Check internet connection with ftp host
+    Check internet connection with ``ftp`` host
 
     Parameters
     ----------
     HOST: str
-        remote ftp host
+        Remote ftp host
     username: str or NoneType
-        ftp username
+        ``ftp`` username
     password: str or NoneType
-        ftp password
+        ``ftp`` password
     """
     # attempt to connect to ftp host
     try:
@@ -459,31 +583,31 @@ def ftp_list(
     sort: bool = False,
 ):
     """
-    List a directory on a ftp host
+    List a directory on a ``ftp`` host
 
     Parameters
     ----------
     HOST: str or list
-        remote ftp host path split as list
+        Remote ``ftp`` host path split as list
     username: str or NoneType
-        ftp username
+        ``ftp`` username
     password: str or NoneType
-        ftp password
+        ``ftp`` password
     timeout: int or NoneType, default None
-        timeout in seconds for blocking operations
+        Timeout in seconds for blocking operations
     basename: bool, default False
-        return the file or directory basename instead of the full path
+        Return the file or directory basename instead of the full path
     pattern: str or NoneType, default None
-        regular expression pattern for reducing list
+        Regular expression pattern for reducing list
     sort: bool, default False
-        sort output list
+        Sort output list
 
     Returns
     -------
     output: list
-        items in a directory
+        Items in a directory
     mtimes: list
-        last modification times for items in the directory
+        Last modification times for items in the directory
     """
     # verify inputs for remote ftp host
     if isinstance(HOST, str):
@@ -544,39 +668,40 @@ def from_ftp(
     fid: object = sys.stdout,
     label: str | None = None,
     mode: oct = 0o775,
+    **kwargs,
 ):
     """
-    Download a file from a ftp host
+    Download a file from a ``ftp`` host
 
     Parameters
     ----------
     HOST: str or list
-        remote ftp host path
+        Remote ``ftp`` host path
     username: str or NoneType
-        ftp username
+        ``ftp`` username
     password: str or NoneType
-        ftp password
+        ``ftp`` password
     timeout: int or NoneType, default None
-        timeout in seconds for blocking operations
+        Timeout in seconds for blocking operations
     local: str, pathlib.Path or NoneType, default None
-        path to local file
+        Path to local file
     hash: str, default ''
         MD5 hash of local file
     chunk: int, default 8192
-        chunk size for transfer encoding
+        Chunk size for transfer encoding
     verbose: bool, default False
-        print file transfer information
+        Print file transfer information
     fid: object, default sys.stdout
         Open file object for logging file transfers if verbose
     label: str, default None
         Label for logging file transfer information if verbose
     mode: oct, default 0o775
-        permissions mode of output local file
+        Permissions mode of output local file
 
     Returns
     -------
     remote_buffer: obj
-        BytesIO representation of file
+        ``BytesIO`` representation of file
     """
     # create logger
     loglevel = logging.INFO if verbose else logging.CRITICAL
@@ -634,7 +759,7 @@ def from_ftp(
 
 
 def _create_default_ssl_context() -> ssl.SSLContext:
-    """Creates the default SSL context"""
+    """Creates the default ``SSL`` context"""
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     _set_ssl_context_options(context)
     context.options |= ssl.OP_NO_COMPRESSION
@@ -642,7 +767,7 @@ def _create_default_ssl_context() -> ssl.SSLContext:
 
 
 def _create_ssl_context_no_verify() -> ssl.SSLContext:
-    """Creates an SSL context for unverified connections"""
+    """Creates an ``SSL`` context for unverified connections"""
     context = _create_default_ssl_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
@@ -650,7 +775,7 @@ def _create_ssl_context_no_verify() -> ssl.SSLContext:
 
 
 def _set_ssl_context_options(context: ssl.SSLContext) -> None:
-    """Sets the default options for the SSL context"""
+    """Sets the default options for the ``SSL`` context"""
     if sys.version_info >= (3, 10) or ssl.OPENSSL_VERSION_INFO >= (1, 1, 0, 7):
         context.minimum_version = ssl.TLSVersion.TLSv1_2
     else:
@@ -677,7 +802,7 @@ def check_connection(
     ----------
     HOST: str
         Remote ``http`` host
-    context: obj, default pyTMD.utilities._default_ssl_context
+    context: obj, default timescale.utilities._default_ssl_context
         ``SSL`` context for ``urllib`` opener object
     timeout: int, default 20
         Timeout in seconds for blocking operations
@@ -708,31 +833,31 @@ def http_list(
     **kwargs,
 ):
     """
-    List a directory on an Apache http Server
+    List a directory on an Apache ``http`` Server
 
     Parameters
     ----------
     HOST: str or list
-        remote http host path
+        Remote ``http`` host path
     timeout: int or NoneType, default None
-        timeout in seconds for blocking operations
+        Timeout in seconds for blocking operations
     context: obj, default timescale.utilities._default_ssl_context
-        SSL context for ``urllib`` opener object
+        ``SSL`` context for ``urllib`` opener object
     parser: obj, default lxml.etree.HTMLParser()
-        HTML parser for ``lxml``
+        ``HTML`` parser for ``lxml``
     format: str, default '%Y-%m-%d %H:%M'
-        format for input time string
+        Format for input time string
     pattern: str, default ''
-        regular expression pattern for reducing list
+        Regular expression pattern for reducing list
     sort: bool, default False
-        sort output list
+        Sort output list
 
     Returns
     -------
     colnames: list
-        column names in a directory
+        Column names in a directory
     collastmod: list
-        last modification times for items in the directory
+        Last modification times for items in the directory
     """
     # verify inputs for remote http host
     if isinstance(HOST, str):
@@ -782,6 +907,7 @@ def from_http(
     local: str | pathlib.Path | None = None,
     hash: str = "",
     chunk: int = 16384,
+    headers: dict = {},
     verbose: bool = False,
     fid: object = sys.stdout,
     label: str | None = None,
@@ -789,35 +915,37 @@ def from_http(
     **kwargs,
 ):
     """
-    Download a file from a http host
+    Download a file from a ``http`` host
 
     Parameters
     ----------
     HOST: str or list
-        remote http host path split as list
+        Remote ``http`` host path split as list
     timeout: int or NoneType, default None
-        timeout in seconds for blocking operations
+        Timeout in seconds for blocking operations
     context: obj, default timescale.utilities._default_ssl_context
-        SSL context for ``urllib`` opener object
+        ``SSL`` context for ``urllib`` opener object
     local: str, pathlib.Path or NoneType, default None
-        path to local file
+        Path to local file
     hash: str, default ''
-        MD5 hash of local file
+        ``MD5`` hash of local file
     chunk: int, default 16384
-        chunk size for transfer encoding
+        Chunk size for transfer encoding
+    headers: dict, default {}
+        Dictionary of headers to append from URL request
     verbose: bool, default False
-        print file transfer information
+        Print file transfer information
     fid: object, default sys.stdout
         Open file object for logging file transfers if verbose
-    label: str, default None
+    label: str or None, default None
         Label for logging file transfer information if verbose
     mode: oct, default 0o775
-        permissions mode of output local file
+        Permissions mode of output local file
 
     Returns
     -------
     remote_buffer: obj
-        BytesIO representation of file
+        ``BytesIO`` representation of file
     """
     # create logger
     loglevel = logging.INFO if verbose else logging.CRITICAL
@@ -833,8 +961,13 @@ def from_http(
         # Create and submit request.
         request = urllib2.Request(posixpath.join(*HOST), **kwargs)
         response = urllib2.urlopen(request, timeout=timeout, context=context)
-    except:
-        raise Exception("Download error from {0}".format(posixpath.join(*HOST)))
+    except urllib2.HTTPError as exc:
+        logging.debug(exc.code)
+        raise
+    except urllib2.URLError as exc:
+        logging.debug(exc.reason)
+        exc.message = "Check internet connection"
+        raise
     else:
         # copy remote file contents to bytesIO object
         remote_buffer = io.BytesIO()
@@ -842,6 +975,8 @@ def from_http(
         remote_buffer.seek(0)
         # save file basename with bytesIO object
         remote_buffer.filename = HOST[-1]
+        # copy headers from response
+        headers.update({k.lower(): v for k, v in response.getheaders()})
         # generate checksum hash for remote file
         remote_hash = hashlib.md5(remote_buffer.getvalue()).hexdigest()
         # compare checksums
@@ -863,6 +998,56 @@ def from_http(
         return remote_buffer
 
 
+# PURPOSE: load a JSON response from a http host
+def from_json(
+    HOST: str | list,
+    timeout: int | None = None,
+    context: ssl.SSLContext = _default_ssl_context,
+    headers: dict = {},
+) -> dict:
+    """
+    Load a ``JSON`` response from a ``http`` host
+
+    Parameters
+    ----------
+    HOST: str or list
+        Remote ``http`` host path split as list
+    timeout: int or NoneType, default None
+        Timeout in seconds for blocking operations
+    context: obj, default timescale.utilities._default_ssl_context
+        ``SSL`` context for ``urllib`` opener object
+    headers: dict, default {}
+        Dictionary of headers to append from URL request
+
+    Returns
+    -------
+    json_response: dict
+        ``JSON`` response
+    """
+    # verify inputs for remote http host
+    if isinstance(HOST, str):
+        HOST = url_split(HOST)
+    # try loading JSON from http
+    try:
+        # Create and submit request for JSON response
+        request = urllib2.Request(posixpath.join(*HOST))
+        request.add_header("Accept", "application/json")
+        response = urllib2.urlopen(request, timeout=timeout, context=context)
+    except urllib2.HTTPError as exc:
+        logging.debug(exc.code)
+        raise
+    except urllib2.URLError as exc:
+        logging.debug(exc.reason)
+        exc.message = "Check internet connection"
+        raise
+    else:
+        # copy headers from response
+        headers.update({k.lower(): v for k, v in response.getheaders()})
+        # load JSON response
+        json_response = json.loads(response.read())
+        return json_response
+
+
 # NASA on-prem DAAC providers
 _daac_providers = {
     "gesdisc": "GES_DISC",
@@ -873,14 +1058,15 @@ _daac_providers = {
     "podaac": "PODAAC",
 }
 
-# NASA Cumulus AWS providers
-_s3_providers = {
-    "gesdisc": "GES_DISC",
-    "ghrcdaac": "GHRC_DAAC",
-    "lpdaac": "LPCLOUD",
-    "nsidc": "NSIDC_CPRD",
-    "ornldaac": "ORNL_CLOUD",
-    "podaac": "POCLOUD",
+# NASA Cumulus AWS S3 buckets
+_s3_buckets = {
+    "gesdisc": "gesdisc-cumulus-prod-protected",
+    "ghrcdaac": "ghrc-cumulus-dev",
+    "lpdaac": "lp-prod-protected",
+    "nsidc": "nsidc-cumulus-prod-protected",
+    "ornldaac": "ornl-cumulus-prod-protected",
+    "podaac": "podaac-ops-cumulus-protected",
+    "podaac-doc": "podaac-ops-cumulus-docs",
 }
 
 # NASA Cumulus AWS S3 credential endpoints
@@ -893,21 +1079,21 @@ _s3_endpoints = {
     "podaac": "https://archive.podaac.earthdata.nasa.gov/s3credentials",
 }
 
-# NASA Cumulus AWS S3 buckets
-_s3_buckets = {
-    "gesdisc": "gesdisc-cumulus-prod-protected",
-    "ghrcdaac": "ghrc-cumulus-dev",
-    "lpdaac": "lp-prod-protected",
-    "nsidc": "nsidc-cumulus-prod-protected",
-    "ornldaac": "ornl-cumulus-prod-protected",
-    "podaac": "podaac-ops-cumulus-protected",
+# NASA Cumulus AWS providers
+_s3_providers = {
+    "gesdisc": "GES_DISC",
+    "ghrcdaac": "GHRC_DAAC",
+    "lpdaac": "LPCLOUD",
+    "nsidc": "NSIDC_CPRD",
+    "ornldaac": "ORNL_CLOUD",
+    "podaac": "POCLOUD",
 }
 
 
 # PURPOSE: attempt to build an opener with netrc
 def attempt_login(
     urs: str,
-    context=_default_ssl_context,
+    context: ssl.SSLContext = _default_ssl_context,
     password_manager: bool = True,
     get_ca_certs: bool = True,
     redirect: bool = True,
@@ -915,7 +1101,7 @@ def attempt_login(
     **kwargs,
 ):
     """
-    attempt to build a urllib opener for NASA Earthdata
+    Attempt to build a ``urllib`` opener for NASA Earthdata
 
     Parameters
     ----------
@@ -935,6 +1121,8 @@ def attempt_login(
         NASA Earthdata username
     password: str, default from environmental variable
         NASA Earthdata password
+    endpoint: str, default 'https://cddis.nasa.gov/archive
+        Full URL to a protected credential website
     retries: int, default 5
         number of retry attempts
     netrc: str, default ~/.netrc
@@ -948,23 +1136,29 @@ def attempt_login(
     # set default keyword arguments
     kwargs.setdefault("username", os.environ.get("EARTHDATA_USERNAME"))
     kwargs.setdefault("password", os.environ.get("EARTHDATA_PASSWORD"))
+    kwargs.setdefault("endpoint", "https://cddis.nasa.gov/archive")
     kwargs.setdefault("retries", 5)
-    kwargs.setdefault("netrc", os.path.expanduser("~/.netrc"))
+    kwargs.setdefault("netrc", pathlib.Path.home().joinpath(".netrc"))
     try:
+        # verify permissions level of netrc file
         # only necessary on jupyterhub
-        os.chmod(kwargs["netrc"], 0o600)
+        nc = pathlib.Path(kwargs["netrc"]).expanduser().absolute()
+        nc.chmod(mode=0o600)
         # try retrieving credentials from netrc
-        username, _, password = netrc.netrc(kwargs["netrc"]).authenticators(urs)
+        username, _, password = netrc.netrc(nc).authenticators(urs)
     except Exception as exc:
         # try retrieving credentials from environmental variables
         username, password = (kwargs["username"], kwargs["password"])
         pass
-    # if username or password are not available
+    # manual input for username if not available
     if not username:
         username = builtins.input(f"Username for {urs}: ")
+    # manual input for password if not available
+    prompt = f"Password for {username}@{urs}: "
     if not password:
-        prompt = f"Password for {username}@{urs}: "
         password = getpass.getpass(prompt=prompt)
+    # host for endpoint
+    HOST = kwargs.get("endpoint")
     # for each retry
     for retry in range(kwargs["retries"]):
         # build an opener for urs with credentials
@@ -980,7 +1174,7 @@ def attempt_login(
         )
         # try logging in by check credentials
         try:
-            check_credentials()
+            check_credentials(HOST)
         except Exception as exc:
             pass
         else:
@@ -996,7 +1190,7 @@ def attempt_login(
 def build_opener(
     username: str,
     password: str,
-    context=_default_ssl_context,
+    context: ssl.SSLContext = _default_ssl_context,
     password_manager: bool = True,
     get_ca_certs: bool = True,
     redirect: bool = True,
@@ -1027,7 +1221,7 @@ def build_opener(
 
     Returns
     -------
-    opener: obj
+    opener: object
         ``OpenerDirector`` instance
     """
     # https://docs.python.org/3/howto/urllib2.html#id5
@@ -1071,6 +1265,7 @@ def get_token(
     username: str | None = None,
     password: str | None = None,
     build: bool = True,
+    context: ssl.SSLContext = _default_ssl_context,
     urs: str = "urs.earthdata.nasa.gov",
 ):
     """
@@ -1085,9 +1280,11 @@ def get_token(
     password: str or NoneType, default None
         NASA Earthdata password
     build: bool, default True
-        Build opener and check WebDAV credentials
+        Build opener and check credentials
     timeout: int or NoneType, default None
         timeout in seconds for blocking operations
+    context: obj, default timescale.utilities._default_ssl_context
+        SSL context for ``urllib`` opener object
     urs: str, default 'urs.earthdata.nasa.gov'
         NASA Earthdata URS 3 host
 
@@ -1102,6 +1299,7 @@ def get_token(
             urs,
             username=username,
             password=password,
+            context=context,
             password_manager=False,
             get_ca_certs=False,
             redirect=False,
@@ -1127,6 +1325,7 @@ def list_tokens(
     username: str | None = None,
     password: str | None = None,
     build: bool = True,
+    context: ssl.SSLContext = _default_ssl_context,
     urs: str = "urs.earthdata.nasa.gov",
 ):
     """
@@ -1141,9 +1340,11 @@ def list_tokens(
     password: str or NoneType, default None
         NASA Earthdata password
     build: bool, default True
-        Build opener and check WebDAV credentials
+        Build opener and check credentials
     timeout: int or NoneType, default None
         timeout in seconds for blocking operations
+    context: obj, default timescale.utilities._default_ssl_context
+        SSL context for ``urllib`` opener object
     urs: str, default 'urs.earthdata.nasa.gov'
         NASA Earthdata URS 3 host
 
@@ -1158,6 +1359,7 @@ def list_tokens(
             urs,
             username=username,
             password=password,
+            context=context,
             password_manager=False,
             get_ca_certs=False,
             redirect=False,
@@ -1184,6 +1386,7 @@ def revoke_token(
     username: str | None = None,
     password: str | None = None,
     build: bool = True,
+    context: ssl.SSLContext = _default_ssl_context,
     urs: str = "urs.earthdata.nasa.gov",
 ):
     """
@@ -1200,9 +1403,11 @@ def revoke_token(
     password: str or NoneType, default None
         NASA Earthdata password
     build: bool, default True
-        Build opener and check WebDAV credentials
+        Build opener and check credentials
     timeout: int or NoneType, default None
         timeout in seconds for blocking operations
+    context: obj, default timescale.utilities._default_ssl_context
+        SSL context for ``urllib`` opener object
     urs: str, default 'urs.earthdata.nasa.gov'
         NASA Earthdata URS 3 host
     """
@@ -1212,6 +1417,7 @@ def revoke_token(
             urs,
             username=username,
             password=password,
+            context=context,
             password_manager=False,
             get_ca_certs=False,
             redirect=False,
@@ -1233,14 +1439,111 @@ def revoke_token(
     logging.debug(f"Token Revoked: {token}")
 
 
+def s3_region():
+    """
+    Get AWS s3 region for EC2 instance
+
+    Returns
+    -------
+    region_name: str
+        AWS region name
+    """
+    boto3 = import_dependency("boto3")
+    region_name = boto3.session.Session().region_name
+    return region_name
+
+
+# PURPOSE: get AWS s3 client for GES DISC
+def s3_client(
+    HOST: str = _s3_endpoints["gesdisc"],
+    timeout: int | None = None,
+    region_name: str = "us-west-2",
+):
+    """
+    Get AWS s3 client for NASA Earthdata
+
+    Parameters
+    ----------
+    HOST: str
+        S3 credential host
+    timeout: int or NoneType, default None
+        timeout in seconds for blocking operations
+    region_name: str, default 'us-west-2'
+        AWS region name
+
+    Returns
+    -------
+    client: obj
+        AWS s3 client
+    """
+    request = urllib2.Request(HOST)
+    response = urllib2.urlopen(request, timeout=timeout)
+    cumulus = json.loads(response.read())
+    # get AWS client object
+    boto3 = import_dependency("boto3")
+    client = boto3.client(
+        "s3",
+        aws_access_key_id=cumulus["accessKeyId"],
+        aws_secret_access_key=cumulus["secretAccessKey"],
+        aws_session_token=cumulus["sessionToken"],
+        region_name=region_name,
+    )
+    # return the AWS client for region
+    return client
+
+
+# PURPOSE: get a s3 bucket name from a presigned url
+def s3_bucket(presigned_url: str) -> str:
+    """
+    Get a s3 bucket name from a presigned url
+
+    Parameters
+    ----------
+    presigned_url: str
+        s3 presigned url
+
+    Returns
+    -------
+    bucket: str
+        s3 bucket name
+    """
+    host = url_split(presigned_url)
+    bucket = re.sub(r"s3:\/\/", r"", host[0], re.IGNORECASE)
+    return bucket
+
+
+# PURPOSE: get a s3 bucket key from a presigned url
+def s3_key(presigned_url: str) -> str:
+    """
+    Get a s3 bucket key from a presigned url
+
+    Parameters
+    ----------
+    presigned_url: str
+        s3 presigned url
+
+    Returns
+    -------
+    key: str
+        s3 bucket key for object
+    """
+    host = url_split(presigned_url)
+    key = posixpath.join(*host[1:])
+    return key
+
+
 # PURPOSE: check that entered NASA Earthdata credentials are valid
-def check_credentials():
+def check_credentials(HOST: str = "https://cddis.nasa.gov/archive"):
     """
     Check that entered NASA Earthdata credentials are valid
+
+    Parameters
+    ----------
+    HOST: str, default 'https://cddis.nasa.gov/archive'
+        Full URL to a protected credential website
     """
     try:
-        remote_path = posixpath.join("https://cddis.nasa.gov", "archive")
-        request = urllib2.Request(url=remote_path)
+        request = urllib2.Request(url=HOST)
         response = urllib2.urlopen(request, timeout=20)
     except urllib2.HTTPError as exc:
         logging.debug(exc.code)
@@ -1470,20 +1773,20 @@ def iers_list(
     Parameters
     ----------
     HOST: str or list
-        remote http host path
+        Remote ``http`` host path
     timeout: int or NoneType, default None
-        timeout in seconds for blocking operations
+        Timeout in seconds for blocking operations
     context: obj, default timescale.utilities._default_ssl_context
-        SSL context for ``urllib`` opener object
+        ``SSL`` context for ``urllib`` opener object
     parser: obj, default lxml.etree.HTMLParser()
         HTML parser for ``lxml``
 
     Returns
     -------
     colnames: list
-        column names in a directory
+        Column names in a directory
     collastmod: list
-        last modification times for items in the directory
+        Last modification times for items in the directory
     """
     # verify inputs for remote http host
     if isinstance(HOST, str):
@@ -1535,17 +1838,17 @@ def from_jpl_ssd(
     kernel: str
         JPL kernel file to download
     timeout: int or NoneType, default None
-        timeout in seconds for blocking operations
+        Timeout in seconds for blocking operations
     context: obj, default timescale.utilities._default_ssl_context
-        SSL context for ``urllib`` opener object
+        ``SSL`` context for ``urllib`` opener object
     hash: str, default ''
         MD5 hash of local file
     chunk: int, default 16384
-        chunk size for transfer encoding
+        Chunk size for transfer encoding
     verbose: bool, default False
-        print file transfer information
+        Print file transfer information
     mode: oct, default 0o775
-        permissions mode of output local file
+        Permissions mode of output local file
     """
     # determine which kernel file to download
     if local is None:
