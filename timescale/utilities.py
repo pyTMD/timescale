@@ -1121,7 +1121,7 @@ def attempt_login(
         NASA Earthdata username
     password: str, default from environmental variable
         NASA Earthdata password
-    endpoint: str, default 'https://cddis.nasa.gov/archive
+    endpoint: str, default 'https://cddis.nasa.gov/archive'
         Full URL to a protected credential website
     retries: int, default 5
         number of retry attempts
