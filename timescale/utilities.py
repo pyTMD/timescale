@@ -114,7 +114,7 @@ def get_github_url(
     branch: str = "main",
 ):
     """
-    Get a URL for the raw content of an item in the project repository
+    Get the URL of an item's raw content from a GitHub repository
 
     Parameters
     ----------
