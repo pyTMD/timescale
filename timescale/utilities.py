@@ -111,8 +111,8 @@ def get_github_url(
     relpath: list | str,
     username: str = "pyTMD",
     repository: str = "timescale",
-    branch: str = "main"
-    ):
+    branch: str = "main",
+):
     """
     Get a URL for the raw content of an item in the project repository
 
