@@ -107,7 +107,12 @@ def get_data_path(relpath: list | str | pathlib.Path):
         return filepath.joinpath(relpath)
 
 
-def get_github_url(relpath: list | str, branch: str = "main"):
+def get_github_url(
+    relpath: list | str,
+    username: str = "pyTMD",
+    repository: str = "timescale",
+    branch: str = "main"
+    ):
     """
     Get a URL for the raw content of an item in the project repository
 
@@ -115,12 +120,23 @@ def get_github_url(relpath: list | str, branch: str = "main"):
     ----------
     relpath: list or str
         Relative path
+    username: str, default 'pyTMD'
+        GitHub username for project repository
+    repository: str, default 'timescale'
+        GitHub project name
+    branch: str, default 'main'
+        GitHub branch name
+
+    Returns
+    -------
+    raw_url: str
+        item URL
     """
     # components of the URL for raw content from the project repository
     HOST = [
         "https://raw.githubusercontent.com",
-        "pyTMD",
-        "timescale",
+        username,
+        repository,
         "refs",
         "heads",
         branch,
@@ -129,7 +145,7 @@ def get_github_url(relpath: list | str, branch: str = "main"):
     if isinstance(relpath, str):
         relpath = [relpath]
     # append the relative path components to the URL
-    return HOST + relpath
+    return "/".join(HOST + relpath)
 
 
 class reify(object):

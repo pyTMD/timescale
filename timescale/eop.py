@@ -228,7 +228,7 @@ def validate_finals_file(input_file: str | pathlib.Path = _finals_file):
     input_file = pathlib.Path(input_file).expanduser().absolute()
     # check that delta time file is accessible: if not download
     if not input_file.exists():
-        update_finals_file(input_file)
+        update_finals_file()
         return
     # read data file splitting at line breaks
     finals = iers_daily_EOP(input_file, include_predictions=False)
@@ -583,6 +583,9 @@ def iers_daily_EOP(
     dinput["MJD"] = dinput["MJD"][:counter]
     dinput["x"] = dinput["x"][:counter]
     dinput["y"] = dinput["y"][:counter]
+    # convert two-digit year to four-digit year
+    two_digit = np.where(dinput["MJD"] < 51544, 1900, 2000)
+    dinput["YYMMDD"][:, 0] += two_digit
     # return the date and polar motion values
     return dinput
 
@@ -626,8 +629,6 @@ def iers_polar_motion(
     # check if IERS finals file is up to date and exists
     if validate:
         validate_finals_file(file)
-    elif not file.exists():
-        raise FileNotFoundError(file)
     # read IERS daily polar motion values
     EOP = timescale.eop.iers_daily_EOP(
         file, include_predictions=include_predictions
