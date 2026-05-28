@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 time.py
-Written by Tyler Sutterley (04/2026)
+Written by Tyler Sutterley (05/2026)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,8 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 05/2026: added functions to update delta time files from project
+        updated CDDIS ftp login options for encrypted connections
     Updated 04/2026: added endpoint option (defaults to True) to date_range
         added default day and month values to from_calendar function
     Updated 12/2025: allow conversion to datetime be in different units
@@ -1162,7 +1164,7 @@ class Timescale:
     @timescale.utilities.reify
     def tt_ut1(self):
         """
-        Difference between universal time (UT) and dynamical time (TT)
+        Difference between dynamical time (TT) and universal time (UT1)
         """
         # return the delta time for the input date converted to days
         return interpolate_delta_time(_delta_file, self.tide)
@@ -1364,41 +1366,53 @@ class Calendar:
         return Calendar(utc=utc)
 
 
-# PURPOSE: calculate the difference between universal time and dynamical time
+# PURPOSE: calculate the difference between dynamical time and universal time
 # by interpolating a delta time file to a given date
 def interpolate_delta_time(
     delta_file: str | pathlib.Path | None,
     idays: np.ndarray,
+    validate: bool = False,
 ):
     """
-    Calculates the difference between universal time (UT) and
-    dynamical time (TT) :cite:p:`Meeus:1991vh`
+    Calculates the difference between dynamical time (TT) and
+    universal time (UT) :cite:p:`Meeus:1991vh`
 
     Parameters
     ----------
     delta_file: str or Pathlib.Path
-        file containing the delta times
-    idays: float
+        file containing the delta times (TT-UT1)
+    idays: np.ndarray
         input times to interpolate (days since 1992-01-01T00:00:00)
+    validate: bool, default False
+        check that delta time file is up to date
 
     Returns
     -------
-    deltat: float
-        delta time at the input time
+    deltat: np.ndarray
+        estimated TT-UT1 values
     """
-    # read delta time file
+    # verify delta time file path
     delta_file = pathlib.Path(delta_file).expanduser().absolute()
-    dinput = np.loadtxt(delta_file)
+    # check if delta time file is up to date and exists
+    if validate:
+        validate_delta_time(delta_file)
+    elif not delta_file.exists():
+        raise FileNotFoundError(delta_file)
+    # names and formats of delta time file columns
+    dtype = dict(names=("Y", "M", "D", "tt_ut1"), formats=("i", "i", "i", "f8"))
+    # read delta time file
+    dinput = np.loadtxt(delta_file, dtype=dtype)
     # calculate Julian days and then convert to days since 1992-01-01T00:00:00
     days = convert_calendar_dates(
-        dinput[:, 0], dinput[:, 1], dinput[:, 2], epoch=_tide_epoch
+        dinput["Y"], dinput["M"], dinput["D"], epoch=_tide_epoch
     )
     # use scipy interpolating splines to interpolate delta times
     spl = scipy.interpolate.UnivariateSpline(
-        days, dinput[:, 3], k=1, s=0, ext=0
+        days, dinput["tt_ut1"], k=1, s=0, ext=0
     )
     # return the delta time for the input date converted to days
-    return spl(idays) / 86400.0
+    deltat = spl(idays) / 86400.0
+    return deltat
 
 
 # PURPOSE: Count number of leap seconds that have passed for each GPS time
@@ -1455,9 +1469,8 @@ def get_leap_seconds(truncate: bool = True):
             if re.match(r"^(?=#@)", i)
         ]
     # check that leap seconds file is still valid
-    expiry = datetime.datetime(*_ntp_epoch) + datetime.timedelta(
-        seconds=int(secs)
-    )
+    network_time = datetime.datetime(*_ntp_epoch)
+    expiry = network_time + datetime.timedelta(seconds=int(secs))
     today = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     update_leap_seconds() if (expiry < today) else None
     # get leap seconds
@@ -1558,6 +1571,82 @@ def update_leap_seconds(
         return
 
 
+# PURPOSE: check if the delta time file is still valid
+def validate_delta_time(delta_file: str | pathlib.Path = _delta_file):
+    """
+    Checks that the delta time file is still up to date
+
+    Parameters
+    ----------
+    delta_file: str or Pathlib.Path
+        file containing the delta times (TT-UT1)
+    """
+    # verify delta time file path
+    delta_file = pathlib.Path(delta_file).expanduser().absolute()
+    # check that delta time file is accessible: if not download
+    if not delta_file.exists():
+        update_delta_time(delta_file)
+        return
+    # names and formats of delta time file columns
+    dtype = dict(names=("Y", "M", "D", "tt_ut1"), formats=("i", "i", "i", "f8"))
+    # read delta time file
+    dinput = np.loadtxt(delta_file, dtype=dtype)
+    # get the last date in the delta time file
+    last = datetime.datetime(dinput["Y"][-1], dinput["M"][-1], dinput["D"][-1])
+    # check if delta time file is still valid (expires after 8 weeks)
+    today = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    expiry = last + datetime.timedelta(weeks=8)
+    # if expired: get latest delta time file from repository
+    update_delta_time(delta_file) if (expiry < today) else None
+
+
+# PURPOSE: downloads a newer version of a delta time file
+def update_delta_time(
+    delta_file: str | pathlib.Path,
+    branch: str = "main",
+    verbose: bool = False,
+    mode: oct = 0o775,
+):
+    """
+    Downloads an updated delta time file from the project GitHub repository
+
+    Parameters
+    ----------
+    delta_file: str or Pathlib.Path
+        file containing the delta times (TT-UT1)
+    branch: str, default 'main'
+        branch of the GitHub repository to download from
+    verbose: bool, default False
+        print file information about output file
+    mode: oct, default 0o775
+        permissions mode of output file
+
+    Notes
+    -----
+    Delta times are the difference between dynamical time and universal time
+    """
+    # verify delta time file path
+    delta_file = pathlib.Path(delta_file).expanduser().absolute()
+    # MD5 hash for comparing with remote
+    HASH = timescale.utilities.get_hash(delta_file)
+    # try downloading from GitHub repository
+    HOST = timescale.utilities.get_github_url(
+        ["timescale", "data", delta_file.name], branch=branch
+    )
+    # log message for failed download
+    msg = f"Unable to download {delta_file.name} from timescale repository"
+    try:
+        timescale.utilities.from_http(
+            HOST, local=delta_file, hash=HASH, verbose=verbose, mode=mode
+        )
+    except timescale.utilities.urllib2.HTTPError as exc:
+        logging.info(msg)
+        logging.debug(exc.code)
+    except timescale.utilities.urllib2.URLError as exc:
+        logging.info(msg)
+        logging.debug(exc.reason)
+
+
 # PURPOSE: Download delta time files and merge into a single
 def merge_delta_time(
     username: str | None = None,
@@ -1589,7 +1678,7 @@ def merge_delta_time(
 
     Notes
     -----
-    Delta times are the difference between universal time and dynamical time
+    Delta times are the difference between dynamical time and universal time
     """
     # retrieve history delta time files
     pull_deltat_file(
@@ -1671,7 +1760,7 @@ def append_delta_time(verbose: bool = False, mode: oct = 0o775):
 
     Notes
     -----
-    Delta times are the difference between universal time and dynamical time
+    Delta times are the difference between dynamical time and universal time
     """
     # merged delta time file
     merged_file = timescale.utilities.get_data_path(
@@ -1736,7 +1825,7 @@ def merge_bulletin_a_files(
 
     Notes
     -----
-    Delta times are the difference between universal time and dynamical time
+    Delta times are the difference between dynamical time and universal time
     """
     # if complete: replace previous version of file
     LOCAL = timescale.utilities.get_data_path(["data", "iers_deltat.data"])
@@ -1812,7 +1901,7 @@ def iers_ftp_delta_time(
 
     Notes
     -----
-    Delta times are the difference between universal time and dynamical time
+    Delta times are the difference between dynamical time and universal time
     """
     # connect to ftp host for IERS bulletins
     HOST = ["ftp.iers.org", "products", "eop", "rapid", "bulletina"]
@@ -1890,7 +1979,7 @@ def iers_delta_time(
 
     Notes
     -----
-    Delta times are the difference between universal time and dynamical time
+    Delta times are the difference between dynamical time and universal time
     """
     # open output daily delta time file
     daily_file = pathlib.Path(daily_file).expanduser().absolute()
@@ -1948,7 +2037,7 @@ def cddis_delta_time(
 
     Notes
     -----
-    Delta times are the difference between universal time and dynamical time
+    Delta times are the difference between dynamical time and universal time
     """
     # connect to CDDIS Earthdata host for IERS bulletins
     HOST = [
@@ -2040,7 +2129,7 @@ def read_iers_bulletin_a(fileID):
 
     Notes
     -----
-    Delta times are the difference between universal time and dynamical time
+    Delta times are the difference between dynamical time and universal time
     """
     # read contents from input file object
     file_contents = fileID.read().decode("utf8").splitlines()
@@ -2200,7 +2289,7 @@ def pull_deltat_file(
 
     Notes
     -----
-    Delta times are the difference between universal time and dynamical time
+    Delta times are the difference between dynamical time and universal time
     """
     # local version of file
     LOCAL = timescale.utilities.get_data_path(["data", FILE])
@@ -2225,26 +2314,26 @@ def pull_deltat_file(
 
     # try downloading from NASA Crustal Dynamics Data Information System
     # NOTE: anonymous ftp access was discontinued on 2020-10-31
-    # requires using the following https Earthdata server
-    server = []
-    # server.append(['cddis.nasa.gov','pub','products','iers',FILE])
-    # server.append(['cddis.gsfc.nasa.gov','products','iers',FILE])
-    for HOST in server:
-        try:
-            timescale.utilities.check_ftp_connection(HOST[0])
-            timescale.utilities.from_ftp(
-                HOST,
-                timeout=timeout,
-                local=LOCAL,
-                hash=HASH,
-                verbose=verbose,
-                mode=mode,
-            )
-        except Exception as exc:
-            logging.debug(traceback.format_exc())
-            pass
-        else:
-            return
+    # need to use encrypted connection with email as password
+    # https://www.earthdata.nasa.gov/centers/cddis-daac/archive-access
+    HOST = ["gdc.cddis.eosdis.nasa.gov", "products", "iers", FILE]
+    try:
+        timescale.utilities.from_ftp(
+            HOST,
+            username=username,
+            password=password,
+            encrypted=True,
+            timeout=timeout,
+            local=LOCAL,
+            hash=HASH,
+            verbose=verbose,
+            mode=mode,
+        )
+    except Exception as exc:
+        logging.debug(traceback.format_exc())
+        pass
+    else:
+        return
 
     # try downloading from NASA Crustal Dynamics Data Information System
     # using NASA Earthdata credentials stored in netrc file

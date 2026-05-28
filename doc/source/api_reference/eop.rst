@@ -22,6 +22,8 @@ General Methods
 
 .. autofunction:: timescale.eop.pull_pole_coordinates
 
+.. autofunction:: timescale.eop.validate_finals_file
+
 .. autofunction:: timescale.eop.update_finals_file
 
 .. autofunction:: timescale.eop.iers_mean_pole

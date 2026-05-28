@@ -81,6 +81,10 @@ General Methods
 
 .. autofunction:: timescale.time.update_leap_seconds
 
+.. autofunction:: timescale.time.validate_delta_time
+
+.. autofunction:: timescale.time.update_delta_time
+
 .. autofunction:: timescale.time.merge_delta_time
 
 .. autofunction:: timescale.time.append_delta_time

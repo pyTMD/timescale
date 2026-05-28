@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 eop.py
-Written by Tyler Sutterley (02/2026)
+Written by Tyler Sutterley (05/2026)
 Utilities for maintaining and calculating Earth Orientation Parameters (EOP)
 
 PYTHON DEPENDENCIES:
@@ -14,6 +14,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 05/2026: added function to check if local finals file is still valid
     Updated 02/2026: added argument to include predicted EOP values from finals
     Updated 07/2025: use numpy interp for 2015 convention mean pole values
         add Desai et al. (2015) secular pole model
@@ -33,6 +34,7 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import datetime
 import traceback
 import numpy as np
 import scipy.interpolate
@@ -121,6 +123,7 @@ def calculate_mean_pole(verbose: bool = False, mode: oct = 0o775):
     try:
         remote_buffer = pull_pole_coordinates(FILE, verbose=verbose)
     except Exception as exc:
+        logging.debug(traceback.format_exc())
         return
 
     # read contents from input file object
@@ -180,6 +183,7 @@ def pull_pole_coordinates(FILE: str, verbose: bool = False):
     try:
         buffer = timescale.utilities.from_ftp(HOST, verbose=verbose, timeout=20)
     except Exception as exc:
+        logging.debug(traceback.format_exc())
         pass
     else:
         return buffer
@@ -189,6 +193,7 @@ def pull_pole_coordinates(FILE: str, verbose: bool = False):
     try:
         buffer = timescale.utilities.from_ftp(HOST, verbose=verbose, timeout=20)
     except Exception as exc:
+        logging.debug(traceback.format_exc())
         pass
     else:
         return buffer
@@ -200,6 +205,7 @@ def pull_pole_coordinates(FILE: str, verbose: bool = False):
             HOST, verbose=verbose, timeout=20
         )
     except Exception as exc:
+        logging.debug(traceback.format_exc())
         pass
     else:
         return buffer
@@ -208,11 +214,40 @@ def pull_pole_coordinates(FILE: str, verbose: bool = False):
     raise RuntimeError(f"Unable to download {FILE}")
 
 
+# PURPOSE: check if the finals file is still valid
+def validate_finals_file(input_file: str | pathlib.Path = _finals_file):
+    """
+    Checks that the IERS daily EOP file is still up to date
+
+    Parameters
+    ----------
+    input_file: str or Pathlib.Path
+        full path to IERS EOP "finals" file
+    """
+    # tilde-expansion of input file
+    input_file = pathlib.Path(input_file).expanduser().absolute()
+    # check that delta time file is accessible: if not download
+    if not input_file.exists():
+        update_finals_file(input_file)
+        return
+    # read data file splitting at line breaks
+    finals = iers_daily_EOP(input_file, include_predictions=False)
+    # get last date in the finals file
+    Y, M, D = finals["YYMMDD"][-1, :]
+    last = datetime.datetime(Y, M, D)
+    # check if delta time file is still valid (expires after 8 weeks)
+    today = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    expiry = last + datetime.timedelta(weeks=8)
+    # if expired: get latest finals file
+    update_finals_file() if (expiry < today) else None
+
+
 # PURPOSE: connects to servers and downloads finals files
 def update_finals_file(
     username: str | None = None,
     password: str | None = None,
     timeout: int | None = 20,
+    branch: str = "main",
     verbose: bool = False,
     mode: oct = 0o775,
 ):
@@ -234,6 +269,8 @@ def update_finals_file(
         NASA Earthdata password
     timeout: int or NoneType, default 20
         timeout in seconds for blocking operations
+    branch: str, default 'main'
+        branch of the GitHub repository to download from
     verbose: bool, default False
         print file information about output file
     mode: oct, default 0o775
@@ -241,10 +278,11 @@ def update_finals_file(
     """
     # local version of file
     LOCAL = _finals_file
+    # MD5 hash for comparing with remote
     HASH = timescale.utilities.get_hash(LOCAL)
 
     # try downloading from US Naval Oceanography Portal
-    HOST = ["http://maia.usno.navy.mil", "ser7", "finals.all"]
+    HOST = ["https://maia.usno.navy.mil", "ser7", "finals.all"]
     try:
         timescale.utilities.from_http(
             HOST,
@@ -255,30 +293,33 @@ def update_finals_file(
             mode=mode,
         )
     except Exception as exc:
+        logging.debug(traceback.format_exc())
         pass
     else:
         return
 
     # try downloading from NASA Crustal Dynamics Data Information System
-    # note: anonymous ftp access will be discontinued on 2020-10-31
-    # will require using the following https Earthdata server after that date
-    server = []
-    server.append(["cddis.nasa.gov", "pub", "products", "iers", "finals.all"])
-    server.append(["cddis.gsfc.nasa.gov", "products", "iers", "finals.all"])
-    for HOST in server:
-        try:
-            timescale.utilities.from_ftp(
-                HOST,
-                timeout=timeout,
-                local=LOCAL,
-                hash=HASH,
-                verbose=verbose,
-                mode=mode,
-            )
-        except Exception as exc:
-            pass
-        else:
-            return
+    # NOTE: anonymous ftp access was discontinued on 2020-10-31
+    # need to use encrypted connection with email as password
+    # https://www.earthdata.nasa.gov/centers/cddis-daac/archive-access
+    HOST = ["gdc.cddis.eosdis.nasa.gov", "products", "iers", "finals.all"]
+    try:
+        timescale.utilities.from_ftp(
+            HOST,
+            username=username,
+            password=password,
+            encrypted=True,
+            timeout=timeout,
+            local=LOCAL,
+            hash=HASH,
+            verbose=verbose,
+            mode=mode,
+        )
+    except Exception as exc:
+        logging.debug(traceback.format_exc())
+        pass
+    else:
+        return
 
     # try downloading from NASA Crustal Dynamics Data Information System
     # using NASA Earthdata credentials stored in netrc file
@@ -301,6 +342,21 @@ def update_finals_file(
             mode=mode,
         )
     except Exception as exc:
+        logging.debug(traceback.format_exc())
+        pass
+    else:
+        return
+
+    # as a final fall back: try downloading from GitHub repository
+    HOST = timescale.utilities.get_github_url(
+        ["timescale", "data", "finals.all"], branch=branch
+    )
+    try:
+        timescale.utilities.from_http(
+            HOST, local=LOCAL, hash=HASH, verbose=verbose, mode=mode
+        )
+    except Exception as exc:
+        logging.debug(traceback.format_exc())
         pass
     else:
         return
@@ -459,6 +515,7 @@ def iers_daily_EOP(
     # number of data lines
     n_lines = len(file_contents)
     dinput = {}
+    dinput["YYMMDD"] = np.zeros((n_lines, 3), dtype=int)
     dinput["MJD"] = np.zeros((n_lines))
     dinput["x"] = np.zeros((n_lines))
     dinput["y"] = np.zeros((n_lines))
@@ -470,6 +527,11 @@ def iers_daily_EOP(
     # read through observation lines
     while (flag == "I") and (next_flag == "I"):
         line = file_contents[counter]
+        # get calendar date from first 6 characters of line
+        dinput["YYMMDD"][counter, 0] = int(line[0:2])
+        dinput["YYMMDD"][counter, 1] = int(line[2:4])
+        dinput["YYMMDD"][counter, 2] = int(line[4:6])
+        # get modified julian date (MJD)
         i = 2 + 2 + 2 + 1
         j = i + 8
         dinput["MJD"][counter] = np.float64(line[i:j])
@@ -494,6 +556,11 @@ def iers_daily_EOP(
         next_flag = "P"
         while (flag == "P") and (next_flag == "P") and (counter < n_lines):
             line = file_contents[counter]
+            # get calendar date from first 6 characters of line
+            dinput["YYMMDD"][counter, 0] = int(line[0:2])
+            dinput["YYMMDD"][counter, 1] = int(line[2:4])
+            dinput["YYMMDD"][counter, 2] = int(line[4:6])
+            # get modified julian date (MJD)
             i = 2 + 2 + 2 + 1
             j = i + 8
             dinput["MJD"][counter] = np.float64(line[i:j])
@@ -512,6 +579,7 @@ def iers_daily_EOP(
             i = 2 + 2 + 2 + 1 + 8 + 1
             next_flag = file_contents[counter][i]
     # reduce to data (or predicted) values
+    dinput["YYMMDD"] = dinput["YYMMDD"][:counter, :]
     dinput["MJD"] = dinput["MJD"][:counter]
     dinput["x"] = dinput["x"][:counter]
     dinput["y"] = dinput["y"][:counter]
@@ -523,6 +591,7 @@ def iers_polar_motion(
     MJD: float | np.ndarray,
     file: str | pathlib.Path = _finals_file,
     include_predictions: bool = False,
+    validate: bool = False,
     **kwargs,
 ):
     """
@@ -537,6 +606,8 @@ def iers_polar_motion(
         default path to IERS EOP "finals" file
     include_predictions: bool, default False
         include predicted EOP values in interpolation
+    validate: bool, default False
+        check that IERS finals file is up to date
     k: int
         Degree of the spline fit
     s: int or float
@@ -552,6 +623,11 @@ def iers_polar_motion(
     # set default keyword arguments
     kwargs.setdefault("k", 3)
     kwargs.setdefault("s", 0)
+    # check if IERS finals file is up to date and exists
+    if validate:
+        validate_finals_file(file)
+    elif not file.exists():
+        raise FileNotFoundError(file)
     # read IERS daily polar motion values
     EOP = timescale.eop.iers_daily_EOP(
         file, include_predictions=include_predictions

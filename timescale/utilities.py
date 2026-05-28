@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 utilities.py
-Written by Tyler Sutterley (04/2026)
+Written by Tyler Sutterley (05/2026)
 Download and management utilities for syncing time and auxiliary files
 
 PYTHON DEPENDENCIES:
@@ -11,6 +11,8 @@ PYTHON DEPENDENCIES:
         https://dateutil.readthedocs.io/en/stable/
 
 UPDATE HISTORY:
+    Updated 05/2026: added function to get the github url of an item
+        added keyword arguments to allow for encrypted ftp connections
     Updated 04/2026: raise original exceptions in cases of HTTPError/URLError
         allow additional keyword arguments to http functions
         added function to parse JSON responses from https
@@ -103,6 +105,31 @@ def get_data_path(relpath: list | str | pathlib.Path):
         return filepath.joinpath(*relpath)
     elif isinstance(relpath, (str, pathlib.Path)):
         return filepath.joinpath(relpath)
+
+
+def get_github_url(relpath: list | str, branch: str = "main"):
+    """
+    Get a URL for the raw content of an item in the project repository
+
+    Parameters
+    ----------
+    relpath: list or str
+        Relative path
+    """
+    # components of the URL for raw content from the project repository
+    HOST = [
+        "https://raw.githubusercontent.com",
+        "pyTMD",
+        "timescale",
+        "refs",
+        "heads",
+        branch,
+    ]
+    # check if relative path is a string and convert to list
+    if isinstance(relpath, str):
+        relpath = [relpath]
+    # append the relative path components to the URL
+    return HOST + relpath
 
 
 class reify(object):
@@ -546,6 +573,7 @@ def check_ftp_connection(
     HOST: str,
     username: str | None = None,
     password: str | None = None,
+    encrypted: bool = False,
 ):
     """
     Check internet connection with ``ftp`` host
@@ -558,11 +586,21 @@ def check_ftp_connection(
         ``ftp`` username
     password: str or NoneType
         ``ftp`` password
+    encrypted: bool, default False
+        Use an encrypted (TLS) connection
     """
     # attempt to connect to ftp host
     try:
-        f = ftplib.FTP(HOST)
-        f.login(username, password)
+        if encrypted:
+            # use an encrypted (TLS) connection
+            f = ftplib.FTP_TLS(HOST)
+            f.login(username, password)
+            f.prot_p()
+        else:
+            # use an unencrypted connection
+            f = ftplib.FTP(HOST)
+            f.login(username, password)
+        # try sending a no-op command
         f.voidcmd("NOOP")
     except IOError:
         raise RuntimeError("Check internet connection")
@@ -577,6 +615,7 @@ def ftp_list(
     HOST: str | list,
     username: str | None = None,
     password: str | None = None,
+    encrypted: bool = False,
     timeout: int | None = None,
     basename: bool = False,
     pattern: str | None = None,
@@ -593,6 +632,8 @@ def ftp_list(
         ``ftp`` username
     password: str or NoneType
         ``ftp`` password
+    encrypted: bool, default False
+        Use an encrypted (TLS) connection
     timeout: int or NoneType, default None
         Timeout in seconds for blocking operations
     basename: bool, default False
@@ -614,11 +655,19 @@ def ftp_list(
         HOST = url_split(HOST)
     # try to connect to ftp host
     try:
-        ftp = ftplib.FTP(HOST[0], timeout=timeout)
+        # try to connect to ftp host
+        if encrypted:
+            # use an encrypted (TLS) connection
+            ftp = ftplib.FTP_TLS(HOST[0], timeout=timeout)
+            ftp.login(username, password)
+            ftp.prot_p()
+        else:
+            # use an unencrypted connection
+            ftp = ftplib.FTP(HOST[0], timeout=timeout)
+            ftp.login(username, password)
     except (socket.gaierror, IOError):
         raise RuntimeError(f"Unable to connect to {HOST[0]}")
     else:
-        ftp.login(username, password)
         # list remote path
         output = ftp.nlst(posixpath.join(*HOST[1:]))
         # get last modified date of ftp files and convert into unix time
@@ -661,6 +710,7 @@ def from_ftp(
     username: str | None = None,
     password: str | None = None,
     timeout: int | None = None,
+    encrypted: bool = False,
     local: str | pathlib.Path | None = None,
     hash: str = "",
     chunk: int = 8192,
@@ -681,6 +731,8 @@ def from_ftp(
         ``ftp`` username
     password: str or NoneType
         ``ftp`` password
+    encrypted: bool, default False
+        Use an encrypted (TLS) connection
     timeout: int or NoneType, default None
         Timeout in seconds for blocking operations
     local: str, pathlib.Path or NoneType, default None
@@ -715,11 +767,18 @@ def from_ftp(
     # try downloading from ftp
     try:
         # try to connect to ftp host
-        ftp = ftplib.FTP(HOST[0], timeout=timeout)
+        if encrypted:
+            # use an encrypted (TLS) connection
+            ftp = ftplib.FTP_TLS(HOST[0], timeout=timeout)
+            ftp.login(username, password)
+            ftp.prot_p()
+        else:
+            # use an unencrypted connection
+            ftp = ftplib.FTP(HOST[0], timeout=timeout)
+            ftp.login(username, password)
     except (socket.gaierror, IOError):
         raise RuntimeError(f"Unable to connect to {HOST[0]}")
     else:
-        ftp.login(username, password)
         # remote path
         ftp_remote_path = posixpath.join(*HOST[1:])
         # copy remote file contents to bytesIO object
