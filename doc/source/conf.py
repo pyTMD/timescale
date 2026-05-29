@@ -108,7 +108,7 @@ html_context = {
     "display_github": True,
     "github_user": github_user,
     "github_repo": github_repo,
-    "github_version": 'main',
+    "github_version": "main",
     "conf_py_path": "/source/",
     "menu_links": [
         (
