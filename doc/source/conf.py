@@ -109,7 +109,7 @@ html_context = {
     "github_user": github_user,
     "github_repo": github_repo,
     "github_version": "main",
-    "conf_py_path": "/source/",
+    "conf_py_path": "/doc/source/",
     "menu_links": [
         (
             '<i class="fa fa-github fa-fw"></i> Source Code',
