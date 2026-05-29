@@ -270,7 +270,7 @@ def update_finals_file(
     timeout: int or NoneType, default 20
         timeout in seconds for blocking operations
     branch: str, default 'main'
-        branch of the GitHub repository to download from
+        branch of the GitHub repository for downloading files
     verbose: bool, default False
         print file information about output file
     mode: oct, default 0o775
@@ -353,7 +353,12 @@ def update_finals_file(
     )
     try:
         timescale.utilities.from_http(
-            HOST, local=LOCAL, hash=HASH, verbose=verbose, mode=mode
+            HOST,
+            local=LOCAL,
+            hash=HASH,
+            timeout=timeout,
+            verbose=verbose,
+            mode=mode,
         )
     except Exception as exc:
         logging.debug(traceback.format_exc())

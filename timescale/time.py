@@ -1604,6 +1604,7 @@ def validate_delta_time(delta_file: str | pathlib.Path = _delta_file):
 def update_delta_time(
     delta_file: str | pathlib.Path,
     branch: str = "main",
+    timeout: int | None = 20,
     verbose: bool = False,
     mode: oct = 0o775,
 ):
@@ -1615,7 +1616,9 @@ def update_delta_time(
     delta_file: str or Pathlib.Path
         file containing the delta times (TT-UT1)
     branch: str, default 'main'
-        branch of the GitHub repository to download from
+        branch of the GitHub repository for downloading files
+    timeout: int or None, default 20
+        timeout for the HTTP request in seconds
     verbose: bool, default False
         print file information about output file
     mode: oct, default 0o775
@@ -1637,7 +1640,12 @@ def update_delta_time(
     msg = f"Unable to download {delta_file.name} from timescale repository"
     try:
         timescale.utilities.from_http(
-            HOST, local=delta_file, hash=HASH, verbose=verbose, mode=mode
+            HOST,
+            local=delta_file,
+            hash=HASH,
+            timeout=timeout,
+            verbose=verbose,
+            mode=mode,
         )
     except timescale.utilities.urllib2.HTTPError as exc:
         logging.info(msg)
