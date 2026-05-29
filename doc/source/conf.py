@@ -101,21 +101,21 @@ for project_url in metadata.get_all("Project-URL"):
     name, _, url = project_url.partition(", ")
     project_urls[name.lower()] = url
 # fetch the repository url
-repository_url = project_urls.get("repository")
+github_url = project_urls.get("repository")
 # add html context
 html_context = {
     "menu_links": [
         (
             '<i class="fa fa-github fa-fw"></i> Source Code',
-            repository_url,
+            github_url,
         ),
         (
             '<i class="fa fa-book fa-fw"></i> License',
-            f"{repository_url}/blob/main/LICENSE",
+            f"{github_url}/blob/main/LICENSE",
         ),
         (
             '<i class="fa fa-comment fa-fw"></i> Discussions',
-            f"{repository_url}/discussions",
+            f"{github_url}/discussions",
         ),
     ],
 }
