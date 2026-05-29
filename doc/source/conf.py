@@ -102,9 +102,14 @@ for project_url in metadata.get_all("Project-URL"):
     project_urls[name.lower()] = url
 # fetch the repository url
 github_url = project_urls.get("repository")
+*_, github_user, github_repo = github_url.split("/")
 # add html context
 html_context = {
     "display_github": True,
+    "github_user": github_user,
+    "github_repo": github_repo,
+    "github_version": 'main',
+    "conf_py_path": "/source/",
     "menu_links": [
         (
             '<i class="fa fa-github fa-fw"></i> Source Code',
