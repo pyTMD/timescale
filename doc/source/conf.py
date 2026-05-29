@@ -104,6 +104,7 @@ for project_url in metadata.get_all("Project-URL"):
 github_url = project_urls.get("repository")
 # add html context
 html_context = {
+    "display_github": True,
     "menu_links": [
         (
             '<i class="fa fa-github fa-fw"></i> Source Code',
