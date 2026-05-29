@@ -239,14 +239,14 @@ def test_gps_week():
 
 def test_greenwich():
     """Test approximations of Greenwich Hour Angle in degrees
-    using Meeus approximation and calculation within pyTMD
+    using Meeus approximation and calculation within timescale
     """
     # create timescale from modified Julian dates
     ts = timescale.time.Timescale(MJD=55414.0)
     # Meeus approximation
     hour_angle = 280.46061837504 + 360.9856473662862*(ts.T*36525.0)
     GHA = np.mod(hour_angle, 360.0)
-    # compare with pyTMD calculation
+    # compare with timescale calculation
     assert np.isclose(GHA, ts.gha)
 
 def test_sidereal():
@@ -254,7 +254,7 @@ def test_sidereal():
     """
     # create timescale from modified Julian dates
     ts = timescale.time.Timescale(MJD=55414.0)
-    # expected side real time in hours
+    # expected sidereal time in hours
     expected = 20.96154017401333
     assert np.isclose(expected, 24.0*ts.st).all()
 

@@ -91,12 +91,6 @@ pixi shell
 - [numpy: Scientific Computing Tools For Python](https://www.numpy.org)
 - [scipy: Scientific Tools for Python](https://www.scipy.org/)
 
-## References
-
-> T. C. Sutterley, T. Markus, T. A. Neumann, M. R. van den Broeke, J. M. van Wessem, and S. R. M. Ligtenberg,
-> "Antarctic ice shelf thickness change from multimission lidar mapping", *The Cryosphere*,
-> 13, 1801-1817, (2019). [doi: 10.5194/tc-13-1801-2019](https://doi.org/10.5194/tc-13-1801-2019)
-
 ## Download
 
 The program homepage is:  
@@ -115,6 +109,12 @@ The software is provided here for your convenience but *with no guarantees whats
 
 This project contains work and contributions from the [scientific community](./CONTRIBUTORS.md).
 If you would like to contribute to the project, please have a look at the [contribution guidelines](./doc/source/getting_started/Contributing.rst), [open issues](https://github.com/pyTMD/timescale/issues) and [discussions board](https://github.com/pyTMD/timescale/discussions).
+
+## References
+
+> T. C. Sutterley, T. Markus, T. A. Neumann, M. R. van den Broeke, J. M. van Wessem, and S. R. M. Ligtenberg,
+> "Antarctic ice shelf thickness change from multimission lidar mapping", *The Cryosphere*,
+> 13, 1801-1817, (2019). [doi: 10.5194/tc-13-1801-2019](https://doi.org/10.5194/tc-13-1801-2019)
 
 ## License
 
