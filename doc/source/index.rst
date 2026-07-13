@@ -97,11 +97,9 @@ Project Details
 .. toctree::
     :maxdepth: 1
     :hidden:
-    :caption: API Reference
+    :caption: User Guide
 
-    api_reference/eop.rst
-    api_reference/time.rst
-    api_reference/utilities.rst
+    api_reference/API-Reference.rst
 
 .. toctree::
     :maxdepth: 1

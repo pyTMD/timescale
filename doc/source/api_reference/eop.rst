@@ -1,6 +1,6 @@
-===
-eop
-===
+=======
+``eop``
+=======
 
 Utilities for maintaining Earth Orientation Parameter (EOP) files
 
