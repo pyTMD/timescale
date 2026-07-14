@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 time.py
-Written by Tyler Sutterley (05/2026)
+Written by Tyler Sutterley (07/2026)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 07/2026: add HTML representations of Timescale and Calendar
     Updated 05/2026: added functions to update delta time files from project
         updated CDDIS ftp login options for encrypted connections
     Updated 04/2026: added endpoint option (defaults to True) to date_range
@@ -1276,6 +1277,19 @@ class Timescale:
         properties = ["timescale.time.Timescale"]
         return "\n".join(properties)
 
+    def __repr__(self):
+        """Representation of the ``Timescale`` object"""
+        return self.__str__()
+
+    def _repr_html_(self):
+        """HTML representation of the ``Timescale`` object"""
+        header = "timescale.time.Timescale"
+        properties = {}
+        properties["Start"] = self.min().to_string()[0]
+        properties["End"] = self.max().to_string()[0]
+        properties["Slices"] = self.__len__()
+        return timescale.utilities.html_repr(header, properties)
+
     def __len__(self):
         """Number of time values"""
         return len(np.atleast_1d(self.MJD))
@@ -1340,6 +1354,16 @@ class Calendar:
         """String representation of the ``Calendar`` object"""
         properties = ["timescale.time.Calendar"]
         return "\n".join(properties)
+
+    def __repr__(self):
+        """Representation of the ``Calendar`` object"""
+        return self.__str__()
+
+    def _repr_html_(self):
+        """HTML representation of the ``Calendar`` object"""
+        header = "timescale.time.Calendar"
+        properties = {}
+        return timescale.utilities.html_repr(header, properties)
 
     def __len__(self):
         """Number of time values"""

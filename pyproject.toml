@@ -55,7 +55,7 @@ Repository = "https://github.com/pyTMD/timescale"
 Issues = "https://github.com/pyTMD/timescale/issues"
 
 [project.optional-dependencies]
-doc = ["docutils", "graphviz", "myst-nb", "numpydoc", "sphinx", "sphinx-argparse>=0.4", "sphinxcontrib-bibtex", "sphinx-design", "sphinx_rtd_theme"]
+doc = ["docutils>=0.17", "graphviz", "ipympl", "myst-nb", "numpydoc", "sphinx", "sphinx-argparse>=0.4", "sphinxcontrib-bibtex", "sphinx-design", "sphinx_rtd_theme"]
 dev = ["flake8", "gh", "pytest>=4.6", "pytest-cov", "pytest-xdist"]
 
 [tool.setuptools.packages.find]
@@ -146,6 +146,12 @@ cmd = "make {{ builder }} {{ flags }}"
 cwd = "doc"
 description = "Create documentation with sphinx"
 
+[tool.pixi.feature.doc.tasks.clean-docs]
+args = [ { "arg" = "builder", "default" = "html"}, { "arg" = "flags", "default" = "" } ]
+cmd = "make clean && make {{ builder }} {{ flags }}"
+cwd = "doc"
+description = "Remove build artifacts and rebuild the documentation with sphinx"
+
 [tool.pixi.feature.dev.tasks.test]
 args = [ { "arg" = "flags", "default" = "" }, { "arg" = "test", "default" = "." } ]
 cmd = "pytest {{ flags }} {{ test }}"
@@ -171,8 +177,9 @@ pytest-cov = "*"
 pytest-xdist = "*"
 
 [tool.pixi.feature.doc.dependencies]
-docutils = "*"
+docutils = ">=0.17"
 graphviz = "*"
+ipympl = "*"
 myst-nb = "*"
 numpydoc = "*"
 sphinx = "*"

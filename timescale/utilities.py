@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 utilities.py
-Written by Tyler Sutterley (05/2026)
+Written by Tyler Sutterley (07/2026)
 Download and management utilities for syncing time and auxiliary files
 
 PYTHON DEPENDENCIES:
@@ -11,6 +11,7 @@ PYTHON DEPENDENCIES:
         https://dateutil.readthedocs.io/en/stable/
 
 UPDATE HISTORY:
+    Updated 07/2026: added basic HTML representation for classes
     Updated 05/2026: added function to get the github url of an item
         added keyword arguments to allow for encrypted ftp connections
     Updated 04/2026: raise original exceptions in cases of HTTPError/URLError
@@ -163,6 +164,38 @@ class reify(object):
         val = self.wrapped(inst)
         setattr(inst, self.wrapped.__name__, val)
         return val
+
+
+def html_repr(
+    header: str,
+    properties: dict,
+    pretty: bool = False,
+) -> str:
+    """
+    HTML Representation for ``timescale`` classes
+
+    Parameters
+    ----------
+    header: str
+        Name of the class
+    properties: dict
+        class properties to display
+    pretty: bool, default False
+        pretty print the HTML
+    """
+    joiner = "\n" if pretty else ""
+    # HTML components
+    html_components = []
+    # add header
+    html_components.append(f"<div><b>{header}</b></div>")
+    # create a list for class properties
+    if properties:
+        property_items = joiner.join(
+            f"<li><b>{k}:</b> {v}</li>" for k, v in properties.items()
+        )
+        html_components.append(f"<ul>{property_items}</ul>")
+    # join components
+    return joiner.join(html_components)
 
 
 def import_dependency(
