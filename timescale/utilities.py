@@ -172,7 +172,7 @@ def html_repr(
     pretty: bool = False,
 ) -> str:
     """
-    HTML Representation for ``timescale`` classes
+    HTML representation for custom classes
 
     Parameters
     ----------
@@ -183,17 +183,23 @@ def html_repr(
     pretty: bool, default False
         pretty print the HTML
     """
-    joiner = "\n" if pretty else ""
     # HTML components
     html_components = []
+    # method of joining HTML components
+    joiner = "\n" if pretty else ""
+    # format representation as sample outputs
+    html_components.append("<samp style='font-size:small;'>")
     # add header
-    html_components.append(f"<div><b>{header}</b></div>")
+    html_components.append("<div style='font-weight:bold;margin-bottom:5px;'>")
+    html_components.append(str(header))
+    html_components.append("</div>")
     # create a list for class properties
     if properties:
         property_items = joiner.join(
             f"<li><b>{k}:</b> {v}</li>" for k, v in properties.items()
         )
         html_components.append(f"<ul>{property_items}</ul>")
+    html_components.append("</samp>")
     # join components
     return joiner.join(html_components)
 
