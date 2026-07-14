@@ -74,6 +74,7 @@ import importlib
 import posixpath
 import subprocess
 import lxml.etree
+import html as _html
 import calendar, time
 import dateutil.parser
 
@@ -187,16 +188,19 @@ def html_repr(
     html_components = []
     # method of joining HTML components
     joiner = "\n" if pretty else ""
+    # validate strings to be HTML safe
+    escape = lambda x: _html.escape(str(x), quote=True)
     # format representation as sample outputs
     html_components.append("<samp style='font-size:small;'>")
     # add header
     html_components.append("<div style='font-weight:bold;margin-bottom:5px;'>")
-    html_components.append(str(header))
+    html_components.append(escape(header))
     html_components.append("</div>")
     # create a list for class properties
     if properties:
         property_items = joiner.join(
-            f"<li><b>{k}:</b> {v}</li>" for k, v in properties.items()
+            f"<li><b>{escape(k)}:</b> {escape(v)}</li>"
+            for k, v in properties.items()
         )
         html_components.append(f"<ul>{property_items}</ul>")
     html_components.append("</samp>")
