@@ -46,6 +46,8 @@ if on_rtd:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "matplotlib.sphinxext.plot_directive",
+    "myst_nb",
     "numpydoc",
     "sphinxcontrib.bibtex",
     "sphinx.ext.autodoc",
@@ -54,6 +56,27 @@ extensions = [
     "sphinx_design",
     "sphinxarg.ext",
 ]
+
+# use myst for notebooks
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".ipynb": "myst-nb",
+}
+# execute notebooks on build
+if on_rtd:
+    nb_execution_mode = "auto"
+    nb_execution_excludepatterns = [
+        "notebooks/*.ipynb",
+    ]
+    nb_output_stderr = "remove-warn"
+elif on_github:
+    nb_execution_mode = "off"
+else:
+    nb_execution_mode = "auto"
+    nb_execution_excludepatterns = [
+        "notebooks/*.ipynb",
+    ]
+    nb_output_stderr = "remove-warn"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -73,6 +96,11 @@ numpydoc_show_class_members = False
 pygments_style = "native"
 bibtex_bibfiles = ["_assets/timescale-refs.bib"]
 bibtex_default_style = "plain"
+plot_formats = ["png"]
+plot_html_show_formats = False
+plot_html_show_source_link = False
+numfig = True
+numfig_secnum_depth = 1
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -81,6 +109,12 @@ html_short_title = metadata["Name"]
 html_show_sourcelink = False
 html_show_sphinx = True
 html_show_copyright = True
+
+numfig_format = {
+    "code-block": None,
+    "figure": "Figure %s:",
+    "table": "Table %s:",
+}
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.

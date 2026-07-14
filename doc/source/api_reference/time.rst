@@ -1,6 +1,8 @@
-====
-time
-====
+.. _api-time:
+
+========
+``time``
+========
 
 Utilities for calculating time operations
 

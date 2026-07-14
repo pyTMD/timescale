@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 utilities.py
-Written by Tyler Sutterley (05/2026)
+Written by Tyler Sutterley (07/2026)
 Download and management utilities for syncing time and auxiliary files
 
 PYTHON DEPENDENCIES:
@@ -11,6 +11,7 @@ PYTHON DEPENDENCIES:
         https://dateutil.readthedocs.io/en/stable/
 
 UPDATE HISTORY:
+    Updated 07/2026: added basic HTML representation for classes
     Updated 05/2026: added function to get the github url of an item
         added keyword arguments to allow for encrypted ftp connections
     Updated 04/2026: raise original exceptions in cases of HTTPError/URLError
@@ -73,6 +74,7 @@ import importlib
 import posixpath
 import subprocess
 import lxml.etree
+import html as _html
 import calendar, time
 import dateutil.parser
 
@@ -163,6 +165,47 @@ class reify(object):
         val = self.wrapped(inst)
         setattr(inst, self.wrapped.__name__, val)
         return val
+
+
+def html_repr(
+    header: str,
+    properties: dict,
+    pretty: bool = False,
+) -> str:
+    """
+    HTML representation for custom classes
+
+    Parameters
+    ----------
+    header: str
+        Name of the class
+    properties: dict
+        class properties to display
+    pretty: bool, default False
+        pretty print the HTML
+    """
+    # HTML components
+    html_components = []
+    # method of joining HTML components
+    joiner = "\n" if pretty else ""
+    # validate strings to be HTML safe
+    escape = lambda x: _html.escape(str(x), quote=True)
+    # format representation as sample outputs
+    html_components.append("<samp style='font-size:small;'>")
+    # add header
+    html_components.append("<div style='font-weight:bold;margin-bottom:5px;'>")
+    html_components.append(escape(header))
+    html_components.append("</div>")
+    # create a list for class properties
+    if properties:
+        property_items = joiner.join(
+            f"<li><b>{escape(k)}:</b> {escape(v)}</li>"
+            for k, v in properties.items()
+        )
+        html_components.append(f"<ul>{property_items}</ul>")
+    html_components.append("</samp>")
+    # join components
+    return joiner.join(html_components)
 
 
 def import_dependency(
