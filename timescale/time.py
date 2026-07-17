@@ -17,6 +17,7 @@ PROGRAM DEPENDENCIES:
 
 UPDATE HISTORY:
     Updated 07/2026: add HTML representations of Timescale and Calendar
+        added attributes for tai_utc and loran_utc
     Updated 05/2026: added functions to update delta time files from project
         updated CDDIS ftp login options for encrypted connections
     Updated 04/2026: added endpoint option (defaults to True) to date_range
@@ -1105,6 +1106,12 @@ class Timescale:
         return (self.gps / (self.day * 7)).astype(np.int64)
 
     @timescale.utilities.reify
+    def loran_utc(self):
+        """Leap seconds between LORAN and UTC time"""
+        # LORAN time is behind of TAI time by 10 seconds
+        return self.tai_utc - 10.0
+
+    @timescale.utilities.reify
     def J2000(self):
         """Seconds (Terrestrial Time) since 2000-01-01T12:00:00"""
         _jd_j2000 = _jd_mjd + _mjd_j2000
@@ -1126,6 +1133,21 @@ class Timescale:
         return (
             np.mod(ST + self.era * self.deg2asec, self.turnasec) / self.turnasec
         )
+
+    @timescale.utilities.reify
+    def tai_utc(self):
+        """Leap seconds between TAI and UTC time"""
+        # dynamic time is ahead of TAI by 32.184 seconds
+        _tt_tai = 32.184
+        # TAI time is ahead of GPS by 19 seconds
+        _tai_gps = 19.0
+        # number of leap seconds at the start of the GPS epoch
+        _leaps_gps = 10.0
+        # convert from dynamic time to TAI
+        TAI = np.atleast_1d(self.tt - _jd_gps) * self.day - _tt_tai
+        # calculate the number of leap seconds
+        leaps = count_leap_seconds(TAI - _tai_gps, truncate=False)
+        return leaps - _leaps_gps + _tai_gps
 
     @timescale.utilities.reify
     def tdb(self):
@@ -1178,12 +1200,10 @@ class Timescale:
         """
         # dynamic time is ahead of TAI by 32.184 seconds
         _tt_tai = 32.184
-        # TAI time is ahead of GPS by 19 seconds
-        _tai_gps = 19.0
         # convert from delta times back to seconds
         _tt_ut1 = self.day * self.tt_ut1
         # recalculate UT1-UTC (seconds)
-        return _tt_tai + _tai_gps + self.gps_utc - _tt_ut1
+        return _tt_tai + self.tai_utc - _tt_ut1
 
     @timescale.utilities.reify
     def T(self):
