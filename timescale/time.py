@@ -18,6 +18,8 @@ PROGRAM DEPENDENCIES:
 UPDATE HISTORY:
     Updated 07/2026: add HTML representations of Timescale and Calendar
         added attributes for tai_utc and loran_utc
+        added timezone option to to_string to allow local time outputs
+        added strftime function to output customized datetime strings
     Updated 05/2026: added functions to update delta time files from project
         updated CDDIS ftp login options for encrypted connections
     Updated 04/2026: added endpoint option (defaults to True) to date_range
@@ -1001,7 +1003,7 @@ class Timescale:
         # return the date in time (default days) since epoch
         return scale * np.array(self.MJD - delta_time_epochs, dtype=np.float64)
 
-    def to_datetime(self, unit="ns"):
+    def to_datetime(self, unit="ns", **kwargs):
         """
         Convert a ``Timescale`` object to a ``datetime`` array
 
@@ -1020,7 +1022,7 @@ class Timescale:
         # return the datetime array
         return np.array(epoch + delta_time.astype(f"timedelta64[{unit}]"))
 
-    def to_string(self, unit: str = "s", **kwargs):
+    def to_string(self, unit: str = "s", timezone="naive", **kwargs):
         """
         Convert a ``Timescale`` object to a formatted string array
 
@@ -1028,12 +1030,29 @@ class Timescale:
         ----------
         unit: str, default 's'
             datetime unit for output string array
+        timezone: str, default 'naive'
+            timezone for output string array
         **kwargs: dict
             keyword arguments for datetime formatting
         """
-        return np.datetime_as_string(
-            self.to_datetime(unit=unit), unit=unit, **kwargs
-        )
+        # convert to datetime objects
+        dtime = self.to_datetime(unit=unit, **kwargs)
+        return np.datetime_as_string(dtime, unit=unit, timezone=timezone)
+
+    def strftime(self, format: str, **kwargs):
+        """
+        Convert a ``Timescale`` object to a custom formatted string array
+
+        Parameters
+        ----------
+        format: str
+            formatting string for output string array
+        **kwargs: dict
+            keyword arguments for datetime formatting
+        """
+        # convert to datetime objects
+        dtime = self.to_datetime(**kwargs).astype(datetime.datetime)
+        return np.array([d.strftime(format) for d in dtime])
 
     # PURPOSE: calculate the sum of a polynomial function of time
     def polynomial_sum(self, coefficients: list | np.ndarray, t: np.ndarray):
