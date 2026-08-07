@@ -202,6 +202,32 @@ def test_timescale():
     assert (ATLAS.asec2rad == np.pi/648000.0)
     assert (ATLAS.masec2rad == np.pi/0.648e12)
 
+def test_string_formatting():
+    """Test that the string representations match expected outputs
+    """
+    # J2000 epoch
+    ts = timescale.from_calendar(2000, 1, 1, 12, 0, 0)
+    # default units case is seconds
+    exp = f'2000-01-01T12:00:00'
+    assert ts.to_string().item() == exp
+    # check all numpy datetime compatible units
+    exp = {}
+    exp['D'] = f'2000-01-01'
+    exp['h'] = f'2000-01-01T12'
+    exp['m'] = f'2000-01-01T12:00'
+    exp['s'] = f'2000-01-01T12:00:00'
+    exp['ms'] = f'2000-01-01T12:00:00.000'
+    exp['us'] = f'2000-01-01T12:00:00.000000'
+    for key, val in exp.items():
+        assert ts.to_string(unit=key).item() == val
+    # check strftime formatting
+    exp = f'2000.01.01'
+    assert ts.strftime(r'%Y.%m.%d').item() == exp
+    exp = f'2000-01-01T12:00:00.000000'
+    assert ts.strftime(r'%Y-%m-%dT%H:%M:%S.%f').item() == exp
+    exp = f'Sat Jan 01 2000'
+    assert ts.strftime(r'%a %b %d %Y').item() == exp
+    
 def test_earth_rotation_angle():
     """Test that the Earth rotation angle (ERA) matches expected outputs
     """

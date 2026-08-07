@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 time.py
-Written by Tyler Sutterley (07/2026)
+Written by Tyler Sutterley (08/2026)
 Utilities for calculating time operations
 
 PYTHON DEPENDENCIES:
@@ -16,6 +16,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 08/2026: add microsecond as option to from_calendar
     Updated 07/2026: add HTML representations of Timescale and Calendar
         added attributes for tai_utc and loran_utc
         added timezone option to to_string to allow local time outputs
@@ -119,6 +120,7 @@ _to_sec = {
     "minute": 60.0,
     "min": 60.0,
     "mins": 60.0,
+    "m": 60.0,
     "hours": 3600.0,
     "hour": 3600.0,
     "hr": 3600.0,
@@ -894,6 +896,7 @@ class Timescale:
         hour: np.ndarray | float = 0.0,
         minute: np.ndarray | float = 0.0,
         second: np.ndarray | float = 0.0,
+        microsecond: np.ndarray | float = 0.0,
     ):
         """
         Converts calendar date arrays into a ``Timescale`` object
@@ -912,6 +915,8 @@ class Timescale:
             minute of the hour
         second: np.ndarray or float, default 0.0
             second of the minute
+        microsecond: np.ndarray or float, default 0.0
+            microsecond of the second
         """
         # verify input data types
         year = np.array(year, dtype=np.float64)
@@ -920,6 +925,7 @@ class Timescale:
         hour = np.array(hour, dtype=np.float64)
         minute = np.array(minute, dtype=np.float64)
         second = np.array(second, dtype=np.float64)
+        microsecond = np.array(microsecond, dtype=np.float64)
         # calculate date in Modified Julian Days (MJD) from calendar date
         # MJD: days since November 17, 1858 (1858-11-17T00:00:00)
         MJD = (
@@ -933,6 +939,7 @@ class Timescale:
             + hour / 24.0
             + minute / 1440.0
             + second / 86400.0
+            + microsecond / 86400e6
             + 1721028.5
             - _jd_mjd
         )
@@ -1050,6 +1057,8 @@ class Timescale:
         **kwargs: dict
             keyword arguments for datetime formatting
         """
+        # set default keyword arguments
+        kwargs.setdefault("unit", "us")
         # convert to datetime objects
         dtime = self.to_datetime(**kwargs).astype(datetime.datetime)
         return np.array([d.strftime(format) for d in dtime])
