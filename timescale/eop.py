@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 eop.py
-Written by Tyler Sutterley (05/2026)
+Written by Tyler Sutterley (09/2026)
 Utilities for maintaining and calculating Earth Orientation Parameters (EOP)
 
 PYTHON DEPENDENCIES:
@@ -14,6 +14,7 @@ PROGRAM DEPENDENCIES:
     utilities.py: download and management utilities for syncing files
 
 UPDATE HISTORY:
+    Updated 09/2026: added option to output nutation angles from daily EOP files
     Updated 05/2026: added function to check if local finals file is still valid
     Updated 02/2026: added argument to include predicted EOP values from finals
     Updated 07/2025: use numpy interp for 2015 convention mean pole values
@@ -488,6 +489,7 @@ def iers_mean_pole(input_epoch: np.ndarray, convention: str = "2018", **kwargs):
 def iers_daily_EOP(
     input_file: str | pathlib.Path = _finals_file,
     include_predictions: bool = False,
+    include_nutation: bool = False,
 ):
     """
     Read daily earth orientation parameters (EOP) file from IERS
@@ -499,6 +501,8 @@ def iers_daily_EOP(
         full path to IERS EOP "finals" file
     include_predictions: bool, default False
         include predicted values in output arrays
+    include_nutation: bool, default False
+        include nutation angles in output arrays
 
     Returns
     -------
@@ -508,6 +512,10 @@ def iers_daily_EOP(
         Angular coordinate x [arcsec]
     y: np.ndarray
         Angular coordinate y [arcsec]
+    dpsi: np.ndarray
+        Nutation in longitude [arcsec]
+    deps: np.ndarray
+        Nutation in obliquity of the ecliptic [arcsec]
     """
     # tilde-expansion of input file
     input_file = pathlib.Path(input_file).expanduser().absolute()
@@ -524,6 +532,10 @@ def iers_daily_EOP(
     dinput["MJD"] = np.zeros((n_lines))
     dinput["x"] = np.zeros((n_lines))
     dinput["y"] = np.zeros((n_lines))
+    # nutation angles
+    if include_nutation:
+        dinput["dpsi"] = np.zeros((n_lines))
+        dinput["deps"] = np.zeros((n_lines))
     # for each line in the file
     # as a default only read the IERS observed values
     flag = "I"
@@ -532,27 +544,33 @@ def iers_daily_EOP(
     # read through observation lines
     while (flag == "I") and (next_flag == "I"):
         line = file_contents[counter]
+        # getting column numbers from the finals readme
+        # https://maia.usno.navy.mil/ser7/readme.finals
         # get calendar date from first 6 characters of line
         dinput["YYMMDD"][counter, 0] = int(line[0:2])
         dinput["YYMMDD"][counter, 1] = int(line[2:4])
         dinput["YYMMDD"][counter, 2] = int(line[4:6])
         # get modified julian date (MJD)
-        i = 2 + 2 + 2 + 1
-        j = i + 8
-        dinput["MJD"][counter] = np.float64(line[i:j])
-        i = j + 1
+        i, j = 7, 8
+        dinput["MJD"][counter] = np.float64(line[i : i + j])
+        i = 16
         flag = line[i]
         # get IERS observed x and y values
-        i += 2
-        j = i + 9
-        dinput["x"][counter] = np.float64(line[i:j])
-        i = j + 10
-        j = i + 9
-        dinput["y"][counter] = np.float64(line[i:j])
+        i, j = 18, 9
+        dinput["x"][counter] = np.float64(line[i : i + j])
+        i, j = 37, 9
+        dinput["y"][counter] = np.float64(line[i : i + j])
+        # get IERS observed nutation angle values
+        if include_nutation:
+            # convert from milliarcseconds to arcseconds
+            i, j = 97, 9
+            dinput["dpsi"][counter] = 1e-3 * np.float64(line[i : i + j])
+            i, j = 116, 9
+            dinput["deps"][counter] = 1e-3 * np.float64(line[i : i + j])
         # add to counter
         counter += 1
         # check next flag
-        i = 2 + 2 + 2 + 1 + 8 + 1
+        i = 16
         next_flag = file_contents[counter][i]
     # if including predicted values: read through rest of the values
     if include_predictions:
@@ -566,28 +584,35 @@ def iers_daily_EOP(
             dinput["YYMMDD"][counter, 1] = int(line[2:4])
             dinput["YYMMDD"][counter, 2] = int(line[4:6])
             # get modified julian date (MJD)
-            i = 2 + 2 + 2 + 1
-            j = i + 8
-            dinput["MJD"][counter] = np.float64(line[i:j])
-            i = j + 1
+            i, j = 7, 8
+            dinput["MJD"][counter] = np.float64(line[i : i + j])
+            i = 16
             flag = line[i]
             # get predicted x and y values
-            i += 2
-            j = i + 9
-            dinput["x"][counter] = np.float64(line[i:j])
-            i = j + 10
-            j = i + 9
-            dinput["y"][counter] = np.float64(line[i:j])
+            i, j = 18, 9
+            dinput["x"][counter] = np.float64(line[i : i + j])
+            i, j = 37, 9
+            dinput["y"][counter] = np.float64(line[i : i + j])
+            # get IERS observed nutation angle values
+            if include_nutation:
+                # convert from milliarcseconds to arcseconds
+                i, j = 97, 9
+                dinput["dpsi"][counter] = 1e-3 * np.float64(line[i : i + j])
+                i, j = 116, 9
+                dinput["deps"][counter] = 1e-3 * np.float64(line[i : i + j])
             # add to counter
             counter += 1
             # check next flag
-            i = 2 + 2 + 2 + 1 + 8 + 1
+            i = 16
             next_flag = file_contents[counter][i]
     # reduce to data (or predicted) values
     dinput["YYMMDD"] = dinput["YYMMDD"][:counter, :]
     dinput["MJD"] = dinput["MJD"][:counter]
     dinput["x"] = dinput["x"][:counter]
     dinput["y"] = dinput["y"][:counter]
+    if include_nutation:
+        dinput["dpsi"] = dinput["dpsi"][:counter]
+        dinput["deps"] = dinput["deps"][:counter]
     # convert two-digit year to four-digit year
     two_digit = np.where(dinput["MJD"] < 51544, 1900, 2000)
     dinput["YYMMDD"][:, 0] += two_digit
